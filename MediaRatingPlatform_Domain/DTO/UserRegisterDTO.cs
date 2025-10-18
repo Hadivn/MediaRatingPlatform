@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MediaRatingPlatform_BusinessLogicLayer.Models
+namespace MediaRatingPlatform_Domain.DTO
 {
-    internal class User
+    public class UserRegisterDTO
     {
-        public int userID { get; set; }
         public string username { get; set; }
         public string password { get; set; }
     }

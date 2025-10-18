@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MediaRatingPlatform_Server.DTO
+namespace MediaRatingPlatform_Domain.DTO
 {
-    internal class UserRegisterDTO
+    public class LoginResponseDTO
     {
-        public string username { get; set; }
+        public string token { get; set; }
     }
 }

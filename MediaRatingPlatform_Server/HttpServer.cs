@@ -1,4 +1,5 @@
-﻿using MediaRatingPlatform_Server.DTO;
+﻿using MediaRatingPlatform_Domain.DTO;
+using MediaRatingPlatform_Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,11 +7,13 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using MediaRatingPlatform_BusinessLogicLayer;
 
 namespace MediaRatingPlatform_Server
 {
     internal class HttpServer
     {
+        private UserService _userService = new UserService();
         private HttpListener _listener;
         // method depending on endpoint.
         private Dictionary<(string path, string method), Func<HttpListenerContext, Task>> _routes;
@@ -28,7 +31,7 @@ namespace MediaRatingPlatform_Server
             {
                // { ("/", "GET"), ctx => { RootHandler(ctx); return Task.CompletedTask; } },
                 { ("/register", "POST"), RegisterHandlerAsync },
-                //{ ("/login", "POST"), ctx => { LoginHandler(ctx); return Task.CompletedTask; } }
+                { ("/login", "POST"), LoginHandlerAsync }
             };
 
 
@@ -86,6 +89,7 @@ namespace MediaRatingPlatform_Server
             response.ContentLength64 = buffer.Length;
             response.OutputStream.Write(buffer, 0, buffer.Length);
             response.OutputStream.Close();
+            
         }
 
         private void RootHandler(HttpListenerContext context)
@@ -93,6 +97,7 @@ namespace MediaRatingPlatform_Server
             WriteResponse(context.Response, "RootHandler", "text/plain");
         }
 
+        // done
         private async Task RegisterHandlerAsync(HttpListenerContext context)
         {
             /*
@@ -109,13 +114,34 @@ namespace MediaRatingPlatform_Server
             stream.Dispose();
             UserRegisterDTO userRegisterDTO = JsonSerializer.Deserialize<UserRegisterDTO>(body);
             Console.WriteLine("User register: " + body);
-            Console.WriteLine("User Register DTO: " + userRegisterDTO.username);
+            Console.WriteLine("User Register DTO username: " + userRegisterDTO.username);
+            Console.WriteLine("User Register DTO password: " + userRegisterDTO.password);
             WriteResponse(context.Response, "RegisterHandler", "text/plain");
+            await _userService.RegisterUserAsync(userRegisterDTO);
+
         }
 
-        private void LoginHandler(HttpListenerContext context)
+        private async Task LoginHandlerAsync(HttpListenerContext context)
         {
-            WriteResponse(context.Response, "LoginHandler", "text/plain");
+            StreamReader stream = new StreamReader(context.Request.InputStream);
+            string body = await stream.ReadToEndAsync();
+            // stream beenden
+            stream.Dispose();
+            UserLoginDTO userLoginDTO = JsonSerializer.Deserialize<UserLoginDTO>(body);
+            Console.WriteLine("User login: " + body);
+            Console.WriteLine("User Login DTO username: " + userLoginDTO.username);
+            Console.WriteLine("User Login DTO password: " + userLoginDTO.password);
+
+            
+            string validatedToken = await _userService.LoginUserAsync(userLoginDTO.username, userLoginDTO.password);
+
+            var responseObj = new LoginResponseDTO
+            {
+                token = validatedToken
+            };
+
+            string json = JsonSerializer.Serialize(responseObj);
+            WriteResponse(context.Response, json, "application/json");
         }
 
     }

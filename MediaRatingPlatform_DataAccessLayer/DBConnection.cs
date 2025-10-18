@@ -19,6 +19,7 @@ namespace MediaRatingPlatform_DataAccessLayer
 
         }
 
+        /*
         public async Task TestConnectionAsync()
         {
             try
@@ -32,7 +33,7 @@ namespace MediaRatingPlatform_DataAccessLayer
                 Console.WriteLine($"Connection failed: {ex.Message}");
             }
         }
-
+        */
 
 
     }
