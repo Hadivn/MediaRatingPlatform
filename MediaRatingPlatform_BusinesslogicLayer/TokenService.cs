@@ -11,8 +11,9 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 {
     public class TokenService
     {
-        private const string SecretKey = "xuXBuxDmUc8Dc0dhVinCzSwZl2OXQIyb";
+        private const string SecretKey = "XgXyOPGhX6odhvhk2vOIq4jK2ss9E3LM";
         private const int ExpirationMinutes = 60;
+        private readonly HashSet<string> _activeTokens = new HashSet<string>();
 
         private readonly byte[] _keyBytes;
 
@@ -21,15 +22,15 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             _keyBytes = Encoding.UTF8.GetBytes(SecretKey);
         }
 
-        // Generate a JWT
         public string GenerateToken(int userId, string username)
         {
+            
+
             var claims = new[]
             {
             new Claim("userId", userId.ToString()),
             new Claim("username", username)
-            // add roles or other claims if needed
-        };
+            };
 
             var credentials = new SigningCredentials(
                 new SymmetricSecurityKey(_keyBytes),
@@ -40,11 +41,17 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 expires: DateTime.UtcNow.AddMinutes(ExpirationMinutes),
                 signingCredentials: credentials);
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+
+            string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+            _activeTokens.Add(tokenString);
+            return tokenString;
         }
 
         public ClaimsPrincipal? ValidateToken(string token)
         {
+            if (!_activeTokens.Contains(token))
+                return null;
+
             var tokenHandler = new JwtSecurityTokenHandler();
             var validationParams = new TokenValidationParameters
             {
@@ -72,7 +79,6 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             if (string.IsNullOrWhiteSpace(authHeader))
                 return 0;
 
-            // Expect: "Bearer <token>"
             var parts = authHeader.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length != 2 || !parts[0].Equals("Bearer", StringComparison.OrdinalIgnoreCase))
                 return 0;
@@ -92,6 +98,16 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 return userId;
 
             return 0;
+        }
+
+        public bool IsTokenActive(string token)
+        {
+            return _activeTokens.Contains(token);
+        }
+
+        public HashSet<string> getActiveTokens()
+        {
+            return _activeTokens;
         }
 
     }

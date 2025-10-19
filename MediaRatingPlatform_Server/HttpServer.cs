@@ -152,6 +152,7 @@ namespace MediaRatingPlatform_Server
             if (string.IsNullOrWhiteSpace(authHeader))
             {
                 WriteResponse(context.Response, "Missing Authorization header", "text/plain");
+                Console.WriteLine("Missing Authorization header");
                 return;
             }
 
@@ -161,10 +162,20 @@ namespace MediaRatingPlatform_Server
             if (userId == 0)
             {
                 WriteResponse(context.Response, "Unauthorized", "text/plain");
+
+                foreach (string tokenParts in authHeader.Split('.')) {
+                    Console.WriteLine("Token Part: " + tokenParts);
+                }
+                Console.WriteLine("Auth Header: " + authHeader);
+                foreach (string token in _tokenService.getActiveTokens())
+                {
+                    Console.WriteLine("active token: " + token);
+                }
+                Console.WriteLine("so called active tokens: " + _tokenService.getActiveTokens().Count);
                 return;
             }
 
-
+            
 
 
             StreamReader stream = new StreamReader(context.Request.InputStream);
@@ -175,8 +186,13 @@ namespace MediaRatingPlatform_Server
             MediaDTO mediaDTO = JsonSerializer.Deserialize<MediaDTO>(body);
             Console.WriteLine($"user ID: {userId}");
             Console.WriteLine("Media DTO: " + body + "\n");
+            Console.WriteLine($"active token count: {_tokenService.getActiveTokens().Count}");
+            foreach (string token in _tokenService.getActiveTokens())
+            {
+                Console.WriteLine("active token: " + token);
+            }
             await _mediaService.CreateMediaAsync(mediaDTO, userId);
-
+            WriteResponse(context.Response, "Successfull", "text/plain");
 
         }
 
