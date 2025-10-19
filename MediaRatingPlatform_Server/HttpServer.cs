@@ -14,6 +14,8 @@ namespace MediaRatingPlatform_Server
     internal class HttpServer
     {
         private UserService _userService = new UserService();
+        private MediaService _mediaService = new MediaService();
+        private TokenService _tokenService = new TokenService();
         private HttpListener _listener;
         // method depending on endpoint.
         private Dictionary<(string path, string method), Func<HttpListenerContext, Task>> _routes;
@@ -29,9 +31,9 @@ namespace MediaRatingPlatform_Server
 
             _routes = new Dictionary<(string path, string method), Func<HttpListenerContext, Task>>
             {
-               // { ("/", "GET"), ctx => { RootHandler(ctx); return Task.CompletedTask; } },
                 { ("/register", "POST"), RegisterHandlerAsync },
-                { ("/login", "POST"), LoginHandlerAsync }
+                { ("/login", "POST"), LoginHandlerAsync },
+                { ("/createMedia", "POST"), CreateMediaHandlerAsync }
             };
 
 
@@ -82,6 +84,7 @@ namespace MediaRatingPlatform_Server
         }
         public void Close() { _listener.Close(); }
 
+        // should include response code as 4th argument
         private void WriteResponse(HttpListenerResponse response, string text, string contentType ="text/plain")
         {
             byte[] buffer = Encoding.UTF8.GetBytes(text);
@@ -129,10 +132,8 @@ namespace MediaRatingPlatform_Server
             stream.Dispose();
             UserLoginDTO userLoginDTO = JsonSerializer.Deserialize<UserLoginDTO>(body);
             Console.WriteLine("User login: " + body);
-            Console.WriteLine("User Login DTO username: " + userLoginDTO.username);
-            Console.WriteLine("User Login DTO password: " + userLoginDTO.password);
-
-            
+          
+            // name passt nicht wirklich
             string validatedToken = await _userService.LoginUserAsync(userLoginDTO.username, userLoginDTO.password);
 
             var responseObj = new LoginResponseDTO
@@ -142,6 +143,41 @@ namespace MediaRatingPlatform_Server
 
             string json = JsonSerializer.Serialize(responseObj);
             WriteResponse(context.Response, json, "application/json");
+        }
+
+        private async Task CreateMediaHandlerAsync(HttpListenerContext context)
+        {
+            // get token
+            string authHeader = context.Request.Headers["Authorization"];
+            if (string.IsNullOrWhiteSpace(authHeader))
+            {
+                WriteResponse(context.Response, "Missing Authorization header", "text/plain");
+                return;
+            }
+
+            // get userId
+            int userId = _tokenService.GetUserIdFromToken(authHeader);
+
+            if (userId == 0)
+            {
+                WriteResponse(context.Response, "Unauthorized", "text/plain");
+                return;
+            }
+
+
+
+
+            StreamReader stream = new StreamReader(context.Request.InputStream);
+            string body = await stream.ReadToEndAsync();
+            // stream beenden
+            stream.Dispose();
+
+            MediaDTO mediaDTO = JsonSerializer.Deserialize<MediaDTO>(body);
+            Console.WriteLine($"user ID: {userId}");
+            Console.WriteLine("Media DTO: " + body + "\n");
+            await _mediaService.CreateMediaAsync(mediaDTO, userId);
+
+
         }
 
     }

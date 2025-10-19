@@ -43,7 +43,6 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        // Validate token and get ClaimsPrincipal (null if invalid)
         public ClaimsPrincipal? ValidateToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -54,7 +53,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(_keyBytes),
-                ClockSkew = TimeSpan.FromSeconds(30) // small grace
+                ClockSkew = TimeSpan.FromSeconds(30)
             };
 
             try
@@ -67,5 +66,33 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 return null;
             }
         }
+
+        public int GetUserIdFromToken(string authHeader)
+        {
+            if (string.IsNullOrWhiteSpace(authHeader))
+                return 0;
+
+            // Expect: "Bearer <token>"
+            var parts = authHeader.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 2 || !parts[0].Equals("Bearer", StringComparison.OrdinalIgnoreCase))
+                return 0;
+
+            string token = parts[1];
+
+            var principal = ValidateToken(token);
+            if (principal == null)
+                return 0;
+
+            // Find claim "userId"
+            var userIdClaim = principal.Claims.FirstOrDefault(c => c.Type == "userId");
+            if (userIdClaim == null)
+                return 0;
+
+            if (int.TryParse(userIdClaim.Value, out int userId))
+                return userId;
+
+            return 0;
+        }
+
     }
 }

@@ -104,7 +104,9 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
                 is_active BOOLEAN NOT NULL DEFAULT FALSE,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
                 last_login_at TIMESTAMPTZ
-                )", connection);
+            )", connection);
+
+            
 
             await createTableCmd.ExecuteNonQueryAsync();
 
