@@ -13,8 +13,8 @@ namespace MediaRatingPlatform_Server
 {
     internal class HttpServer
     {
-        private UserService _userService = new UserService();
-        private MediaService _mediaService = new MediaService();
+        private UserService _userService;
+        private MediaService _mediaService;
         private TokenService _tokenService = new TokenService();
         private HttpListener _listener;
         // method depending on endpoint.
@@ -25,6 +25,9 @@ namespace MediaRatingPlatform_Server
             {
                 throw new ArgumentNullException("prefix");
             }
+
+            _userService = new UserService(_tokenService);
+            _mediaService = new MediaService();
 
             _listener = new HttpListener();
             _listener.Prefixes.Add(prefix);
@@ -45,6 +48,7 @@ namespace MediaRatingPlatform_Server
             {
                 _listener.Start();
                 Console.WriteLine("Server started");
+                
             }
             catch (Exception ex)
             {
@@ -171,7 +175,7 @@ namespace MediaRatingPlatform_Server
                 {
                     Console.WriteLine("active token: " + token);
                 }
-                Console.WriteLine("so called active tokens: " + _tokenService.getActiveTokens().Count);
+                Console.WriteLine("active tokens count: " + _tokenService.getActiveTokens().Count);
                 return;
             }
 

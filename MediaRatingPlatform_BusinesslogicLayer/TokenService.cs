@@ -13,7 +13,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
     {
         private const string SecretKey = "XgXyOPGhX6odhvhk2vOIq4jK2ss9E3LM";
         private const int ExpirationMinutes = 60;
-        private readonly HashSet<string> _activeTokens = new HashSet<string>();
+        private HashSet<string> _activeTokens = new HashSet<string>();
 
         private readonly byte[] _keyBytes;
 
@@ -44,7 +44,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 
             string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
             _activeTokens.Add(tokenString);
-            return tokenString;
+             return tokenString;
         }
 
         public ClaimsPrincipal? ValidateToken(string token)

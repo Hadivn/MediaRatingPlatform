@@ -15,10 +15,10 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         private UserRepository _userRepository;
         private TokenService _tokenService;
 
-        public UserService()
+        public UserService(TokenService tokenService)
         {
             _userRepository = new UserRepository();
-            _tokenService = new TokenService();
+            _tokenService = tokenService;
         }
         
         // done
