@@ -10,7 +10,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 {
     public class MediaRepository
     {
-        private string _connectionString = "Host=localhost;Port=5432;Username=mrpdatabase;Password=user;Database=mrpdatabase";
+        private string _connectionString = "Host=localhost;Port=5432;Username=mrpdatabase;Password=mysecretpassword;Database=mrpdatabase";
 
 
         public MediaRepository()

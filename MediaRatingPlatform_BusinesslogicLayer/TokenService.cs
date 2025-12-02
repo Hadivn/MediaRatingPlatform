@@ -15,17 +15,19 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         private const int ExpirationMinutes = 60;
         private HashSet<string> _activeTokens = new HashSet<string>();
 
+
         private readonly byte[] _keyBytes;
 
         public TokenService()
         {
+            // Convert the secret key to byte array, because SymmetricSecurityKey needs byte[]
             _keyBytes = Encoding.UTF8.GetBytes(SecretKey);
         }
 
         public string GenerateToken(int userId, string username)
         {
-            
 
+            // claims are used in authentication, because of their key-value structure
             var claims = new[]
             {
             new Claim("userId", userId.ToString()),

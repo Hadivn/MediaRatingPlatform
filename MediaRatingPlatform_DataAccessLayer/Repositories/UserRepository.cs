@@ -5,7 +5,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
 {
     public class UserRepository
     {
-        private string _connectionString = "Host=localhost;Port=5432;Username=mrpdatabase;Password=user;Database=mrpdatabase";
+        private string _connectionString = "Host=localhost;Port=5432;Username=mrpdatabase;Password=mysecretpassword;Database=mrpdatabase";
         
 
         // done
@@ -19,7 +19,6 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
                 throw new Exception("Username existiert bereits!");
             }
 
-            // insert user into database
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
 
@@ -29,6 +28,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
                 "INSERT INTO users (username, password, is_active, created_at) VALUES (@u, @p, @active, @created)",
                 connection);
 
+            // lastLoginAt is null at creation
             insertCmd.Parameters.AddWithValue("u", userEntity.username);
             insertCmd.Parameters.AddWithValue("p", userEntity.password);
             insertCmd.Parameters.AddWithValue("active", false);
@@ -38,7 +38,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
         }
 
 
-        // sollte ich genauer anschauen
+       
         public async Task<bool> GetByUsernameAsync(string username)
         {
             using var connection = new NpgsqlConnection(_connectionString);
@@ -47,6 +47,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
             var userExistsCmd = new NpgsqlCommand("SELECT COUNT(*) FROM users WHERE username = @u", connection);
             userExistsCmd.Parameters.AddWithValue("u", username);
 
+            // sollte ich genauer anschauen
             var count = (long)await userExistsCmd.ExecuteScalarAsync();
             return count > 0;
         }
@@ -65,7 +66,8 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
 
             if (!await reader.ReadAsync())
                 return null; // user not found
-
+           
+            // need a closer inspection
             return new UserEntity(reader.GetString(1), reader.GetString(2))
             {
                 id = reader.GetInt32(0),

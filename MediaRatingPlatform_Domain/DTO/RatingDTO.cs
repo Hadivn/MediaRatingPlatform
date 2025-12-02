@@ -15,7 +15,6 @@ namespace MediaRatingPlatform_Domain.DTO
         // optional
         public string? comment { get; set; }
         public DateTime timestamp { get; set; }
-        // comments are not publicly visible until confirmed by the author
         public bool confirmation { get; set; }
 
     }

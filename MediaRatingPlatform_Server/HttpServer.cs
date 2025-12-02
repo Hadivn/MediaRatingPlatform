@@ -58,9 +58,9 @@ namespace MediaRatingPlatform_Server
 
             while (true)
             {
-                // waits for HTTP-Anfrage from client.
+                // waits for HTTP-Request from client.
                 HttpListenerContext context = await _listener.GetContextAsync();
-                // represents the incoming HTTP-Anfrage
+                // represents the incoming HTTP-Request from client to server
                 HttpListenerRequest request = context.Request;
                 // represents the outgoing HTTP-Answer from server to client
                 HttpListenerResponse response = context.Response;
@@ -70,7 +70,10 @@ namespace MediaRatingPlatform_Server
                 Console.WriteLine($"[{DateTime.Now}] {request.HttpMethod} {path}");
 
                 var key = (path, method);
-                if(_routes.TryGetValue(key, out var handler))
+                // check if route exists then call handler
+                // what does the if mean here?
+                // it means: if the key exists in the dictionary, assign the corresponding value to handler
+                if (_routes.TryGetValue(key, out var handler))
                 {
                     await handler(context);
                 }
@@ -137,7 +140,7 @@ namespace MediaRatingPlatform_Server
             UserLoginDTO userLoginDTO = JsonSerializer.Deserialize<UserLoginDTO>(body);
             Console.WriteLine("User login: " + body);
           
-            // name passt nicht wirklich
+            
             string validatedToken = await _userService.LoginUserAsync(userLoginDTO.username, userLoginDTO.password);
 
             var responseObj = new LoginResponseDTO
