@@ -5,7 +5,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
 {
     public class UserRepository
     {
-        private string _connectionString = "Host=localhost;Port=5432;Username=mrpdatabase;Password=mysecretpassword;Database=mrpdatabase";
+        private string _connectionString = ;
         
 
         // done
@@ -91,27 +91,6 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
         }
 
 
-        // done
-        public async Task InitializeDatabaseAsync()
-        {
-            using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            // check if table exists
-            var createTableCmd = new NpgsqlCommand(
-                @"CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username VARCHAR(100) NOT NULL,
-                password VARCHAR(100) NOT NULL,
-                is_active BOOLEAN NOT NULL DEFAULT FALSE,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-                last_login_at TIMESTAMPTZ
-            )", connection);
-
-            
-
-            await createTableCmd.ExecuteNonQueryAsync();
-
-        }
+       
     }
 }

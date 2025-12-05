@@ -43,28 +43,6 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
         }
 
 
-        // changes later, add userId to track which has which entry
-        public async Task InitializeDatabase()
-        {
-            using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            // TEXT --> no limit, VarChar --> Limited
-            var createMediaTableCmd = new NpgsqlCommand(
-                @"CREATE TABLE IF NOT EXISTS media (
-                id SERIAL PRIMARY KEY,
-                title VARCHAR(200) NOT NULL,
-                description TEXT NOT NULL,
-                media_type VARCHAR(50) NOT NULL,
-                release_year INT NOT NULL,
-                age_restriction INT NOT NULL,
-                genres VARCHAR(200) NOT NULL,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-                updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-            )", connection);
-
-            await createMediaTableCmd.ExecuteNonQueryAsync();
-
-        }
+      
     }
 }
