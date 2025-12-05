@@ -27,12 +27,12 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 
             try
             {
-                Console.WriteLine($"Creating Media {mediaEntity.title} successfull");
                 await _mediaRepository.CreateMediaAsync(mediaEntity);
-                
+                Console.WriteLine($"Creating Media {mediaEntity.title} successfull");
             }
             catch (Exception ex)
             {
+                Console.WriteLine("------------------ MEDIA CREATION FAILED ------------------");
                 Console.WriteLine($"mediaType = {mediaEntity.mediaType}");
                 Console.WriteLine($"releaseYear = {mediaEntity.releaseYear}");
                 Console.WriteLine($"age restriction = {mediaEntity.ageRestriction}");
@@ -44,10 +44,27 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine($"updated at = {mediaEntity.updatedAt}");
                 Console.WriteLine($"genres = {mediaEntity.genres}");
 
-                Console.WriteLine($"Creating Media {mediaEntity.title} failed: " + ex.Message);
+                Console.WriteLine($"Creating Media {mediaEntity.title} failed: *{ex.Message}*");
+                Console.WriteLine("------------------------------------------------------------");
             }
 
 
+        }
+
+        public async Task DeleteMediaByTitleAsync(string title)
+        {
+            try
+            {
+                await _mediaRepository.DeleteMediaByTitle(title);
+                Console.WriteLine($"Deleting Media {title} successfull");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("------------------ MEDIA DELETION FAILED ------------------");
+                Console.WriteLine($"Deleting Media {title} failed: *{ex.Message}*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+            }
         }
     }
 }

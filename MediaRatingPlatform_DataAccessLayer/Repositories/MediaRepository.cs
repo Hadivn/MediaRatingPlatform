@@ -10,17 +10,15 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 {
     public class MediaRepository
     {
-        private string _connectionString = "Host=localhost;Port=5432;Username=mrpdatabase;Password=mysecretpassword;Database=mrpdatabase";
-
-
-        public MediaRepository()
-        {
-            // should fix this, no await in constructor
-            InitializeDatabase();       
-        }
+        private string _connectionString = "Host=localhost;Port=5432;Username=mrpdatabase;Password=user;Database=mrpdatabase";
 
         public async Task CreateMediaAsync(MediaEntity mediaEntity)
         {
+
+            if (await MediaExists(mediaEntity.title))
+            {
+                throw new Exception("Media existiert bereits!");
+            }
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
 
@@ -40,6 +38,38 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 
             await cmd.ExecuteNonQueryAsync();
 
+        }
+
+        public async Task<bool> MediaExists(string title)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var mediaExistsCmd = new NpgsqlCommand("SELECT COUNT(*) FROM media WHERE title = @t", connection);
+            mediaExistsCmd.Parameters.AddWithValue("t", title);
+
+            var count = (long)await mediaExistsCmd.ExecuteScalarAsync();
+            return count > 0;
+        }
+
+        public async Task DeleteMediaByTitle(string title)
+        {
+            try {
+                using var connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+                var deleteCmd = new NpgsqlCommand("DELETE FROM media WHERE title = @t", connection);
+                deleteCmd.Parameters.AddWithValue("t", title);
+                await deleteCmd.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("-------------------------------------------------------");
+                throw new Exception($"Error while trying to delete {title}" +
+                    $"exception Layer: DataAccessLayer " +
+                    $"exception: {ex.Message}" );
+                Console.WriteLine("-------------------------------------------------------");
+            }
+            
         }
 
 

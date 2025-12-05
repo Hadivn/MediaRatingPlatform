@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MediaRatingPlatform_BusinesslogicLayer\MediaRatingPlatform_BusinessLogicLayer.csproj" />
+    <ProjectReference Include="..\MediaRatingPlatform_DataAccessLayer\MediaRatingPlatform_DataAccessLayer.csproj" />
     <ProjectReference Include="..\MediaRatingPlatform_Domain\MediaRatingPlatform_Domain.csproj" />
   </ItemGroup>
 

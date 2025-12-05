@@ -5,13 +5,13 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
 {
     public class UserRepository
     {
-        private string _connectionString = ;
+        private string _connectionString = "Host=localhost;Port=5432;Username=mrpdatabase;Password=user;Database=mrpdatabase";
         
 
         // done
         public async Task CreateUser(UserEntity userEntity)
         {
-            await InitializeDatabaseAsync();
+           
 
             // check if users exists already
             if (await GetByUsernameAsync(userEntity.username))

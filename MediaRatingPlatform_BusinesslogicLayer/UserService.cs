@@ -39,7 +39,9 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Creating a user failed: "+ ex.Message);
+                Console.WriteLine("------------------ USER CREATION FAILED ------------------");
+                Console.WriteLine($"Creating a user failed: *{ex.Message}*");
+                Console.WriteLine("----------------------------------------------------------");
             }
 
 

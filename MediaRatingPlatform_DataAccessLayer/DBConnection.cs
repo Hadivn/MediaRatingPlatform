@@ -10,12 +10,21 @@ namespace MediaRatingPlatform_DataAccessLayer
             _connectionString = connectionString;
         }
 
-        public async Task<NpgsqlConnection> ConnectToDatabaseAsync()
+        public async Task ConnectToDatabaseAsync()
         {
-            var conn = new NpgsqlConnection(_connectionString);
-            await conn.OpenAsync();
-            Console.WriteLine("Connected to PostgreSQL!");
-            return conn;
+            try
+            {
+                var _connection = new NpgsqlConnection(_connectionString);
+                await _connection.OpenAsync();
+                Console.WriteLine("Connected to PostgreSQL!");
+                
+            }
+            catch (Exception ex)
+            {
+                    Console.WriteLine($"Error connecting to database: {ex.Message}");
+                    throw;
+            }
+           
 
         }
 
@@ -23,8 +32,8 @@ namespace MediaRatingPlatform_DataAccessLayer
         // changes later, add userId to track which has which entry
         public async Task InitializeDatabase()
         {
-            using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync();
+            using var _connection = new NpgsqlConnection(_connectionString);
+            await _connection.OpenAsync();
 
             // TEXT --> no limit, VarChar --> Limited
             var createMediaTableCmd = new NpgsqlCommand(
@@ -38,34 +47,26 @@ namespace MediaRatingPlatform_DataAccessLayer
                 genres VARCHAR(200) NOT NULL,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-            )", connection);
+            )", _connection);
 
             await createMediaTableCmd.ExecuteNonQueryAsync();
 
-        }
-
-        // done
-        public async Task InitializeDatabaseAsync()
-        {
-            using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            // check if table exists
             var createTableCmd = new NpgsqlCommand(
-                @"CREATE TABLE IF NOT EXISTS users (
+               @"CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 username VARCHAR(100) NOT NULL,
                 password VARCHAR(100) NOT NULL,
                 is_active BOOLEAN NOT NULL DEFAULT FALSE,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
                 last_login_at TIMESTAMPTZ
-            )", connection);
+            )", _connection);
 
 
 
             await createTableCmd.ExecuteNonQueryAsync();
 
         }
+
 
 
     }
