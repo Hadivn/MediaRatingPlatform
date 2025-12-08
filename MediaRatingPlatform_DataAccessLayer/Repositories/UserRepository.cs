@@ -8,7 +8,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
         private string _connectionString = "Host=localhost;Port=5432;Username=mrpdatabase;Password=user;Database=mrpdatabase";
         
 
-        // done
+        // CRUD - User create
         public async Task CreateUser(UserEntity userEntity)
         {
            
@@ -37,8 +37,41 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
             await insertCmd.ExecuteNonQueryAsync();
         }
 
+        // CRUD - User read own data
+        public async Task<UserEntity> GetUserByIdAsync(int userId)
+        {
+           using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            string sql = "SELECT id, username, password, is_active, created_at FROM users WHERE id = @id";
+            using var cmd = new NpgsqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@id", userId);
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (!await reader.ReadAsync())
+                return null; // user not found
+            
+            return new UserEntity(reader.GetString(1), reader.GetString(2))
+            {
+                id = reader.GetInt32(0),
+                isActive = reader.GetBoolean(3),
+                createdAt = reader.GetDateTime(4)
+            };
+        }
 
-       
+        // User update last login
+        public async Task UpdateLastLogin(int userId, DateTime time)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            string sql = "UPDATE users SET last_login_at = @t WHERE id = @id";
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@t", time);
+            cmd.Parameters.AddWithValue("@id", userId);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+
         public async Task<bool> GetByUsernameAsync(string username)
         {
             using var connection = new NpgsqlConnection(_connectionString);
@@ -76,19 +109,8 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
             };
         }
 
-        // should be done
-        public async Task UpdateLastLogin(int userId, DateTime time)
-        {
-            using var conn = new NpgsqlConnection(_connectionString);
-            await conn.OpenAsync();
-
-            string sql = "UPDATE users SET last_login_at = @t WHERE id = @id";
-            using var cmd = new NpgsqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("@t", time);
-            cmd.Parameters.AddWithValue("@id", userId);
-
-            await cmd.ExecuteNonQueryAsync();
-        }
+     
+       
 
 
        

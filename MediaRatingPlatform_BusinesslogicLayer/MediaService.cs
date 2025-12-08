@@ -20,6 +20,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             _mediaRepository = new MediaRepository();
         }
 
+        // CRUD - Media create
         public async Task CreateMediaAsync(MediaDTO mediaDTO, int userId)
         {
             MediaEntity mediaEntity = new MediaEntity(mediaDTO.title, mediaDTO.description, mediaDTO.mediaType,
@@ -51,6 +52,13 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 
         }
 
+        // CRUD - Media read
+        public async Task ReadAllMediaAsync()
+        {
+            await _mediaRepository.ReadAllMediaAsync();
+        }
+
+        // CRUD - Media delete
         public async Task DeleteMediaByTitleAsync(string title)
         {
             try

@@ -20,8 +20,8 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             _userRepository = new UserRepository();
             _tokenService = tokenService;
         }
-        
-        // done
+
+        // Register + Create User
         public async Task RegisterUserAsync(UserRegisterDTO userRegisterDTO)
         {
             // map DTO into entity
@@ -47,8 +47,8 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 
         }
 
-    
-        // testing if it works
+
+        // Login User
         public async Task<string> LoginUserAsync(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))

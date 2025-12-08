@@ -1,4 +1,5 @@
-﻿using MediaRatingPlatform_Domain.DTO;
+﻿using MediaRatingPlatform_BusinessLogicLayer;
+using MediaRatingPlatform_Domain.DTO;
 using MediaRatingPlatform_Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -7,7 +8,6 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using MediaRatingPlatform_BusinessLogicLayer;
 
 namespace MediaRatingPlatform_Server
 {
@@ -36,8 +36,11 @@ namespace MediaRatingPlatform_Server
             {
                 { ("/register", "POST"), RegisterHandlerAsync },
                 { ("/login", "POST"), LoginHandlerAsync },
+                // Media endpoints
                 { ("/createMedia", "POST"), CreateMediaHandlerAsync },
+                { ("/readMedia", "GET"), ReadAllMediaHandlerAsync },
                 { ("/deleteMedia", "DELETE"), DeleteMediaHandlerAsync}
+
             };
 
 
@@ -86,7 +89,8 @@ namespace MediaRatingPlatform_Server
             }
         }
 
-        public void Stop() {
+        public void Stop()
+        {
             _listener.Stop();
             Console.WriteLine("Server stopped");
         }
@@ -103,10 +107,6 @@ namespace MediaRatingPlatform_Server
 
         }
 
-        private void RootHandler(HttpListenerContext context)
-        {
-            WriteResponse(context.Response, "RootHandler", "text/plain");
-        }
 
         // done
         private async Task RegisterHandlerAsync(HttpListenerContext context)
@@ -157,37 +157,14 @@ namespace MediaRatingPlatform_Server
             WriteResponse(context.Response, json, "application/json");
         }
 
+        /*--------------------------------- Media Handlers ---------------------------------
+         ------------------------------------------------------------------------------------*/
+
+        // CRUD - Create, Read, Update, Delete
+        // Create Media
         private async Task CreateMediaHandlerAsync(HttpListenerContext context)
         {
-            // get token
-            string authHeader = context.Request.Headers["Authorization"];
-            if (string.IsNullOrWhiteSpace(authHeader))
-            {
-                WriteResponse(context.Response, "Missing Authorization header", "text/plain");
-                Console.WriteLine("Missing Authorization header");
-                return;
-            }
-
-            // get userId
-            int userId = _tokenService.GetUserIdFromToken(authHeader);
-
-            if (userId == 0)
-            {
-                WriteResponse(context.Response, "Unauthorized", "text/plain");
-                Console.WriteLine("------------------ USER TOKEN INFO ------------------");
-                foreach (string tokenParts in authHeader.Split('.')) {
-                    Console.WriteLine("Token Part: " + tokenParts);
-                }
-                Console.WriteLine("Auth Header: " + authHeader);
-                foreach (string token in _tokenService.getActiveTokens())
-                {
-                    Console.WriteLine("active token: " + token);
-                }
-                Console.WriteLine("active tokens count: " + _tokenService.getActiveTokens().Count);
-                Console.WriteLine("-----------------------------------------------------");
-                return;
-            }
-
+            int userId = await UserAuthorizationAsync(context);
 
 
 
@@ -212,36 +189,31 @@ namespace MediaRatingPlatform_Server
 
         }
 
+        // Read All Media
+        private async Task ReadAllMediaHandlerAsync(HttpListenerContext context)
+        {
+            //   int userId = await UserAuthorizationAsync(context);
+            await UserAuthorizationAsync(context);
+
+            await _mediaService.ReadAllMediaAsync();
+            WriteResponse(context.Response, "Read Media Successfull", "text/plain");
+        }
+
+        // Update Media
+        // to be implemented
+        private async Task UpdateMediaHandlerAsync(HttpListenerContext context)
+        {
+            int userId = await UserAuthorizationAsync(context);
+
+            // await
+        }
+
+
+
+        // Delete Media
         private async Task DeleteMediaHandlerAsync(HttpListenerContext context)
         {
-            // get token
-            string authHeader = context.Request.Headers["Authorization"];
-            if (string.IsNullOrWhiteSpace(authHeader))
-            {
-                WriteResponse(context.Response, "Missing Authorization header", "text/plain");
-                Console.WriteLine("Missing Authorization header");
-                return;
-            }
-            // get userId
-            int userId = _tokenService.GetUserIdFromToken(authHeader);
-            if (userId == 0)
-            {
-                WriteResponse(context.Response, "Unauthorized", "text/plain");
-                Console.WriteLine("------------------ USER TOKEN INFO ------------------");
-                foreach (string tokenParts in authHeader.Split('.'))
-                {
-                    Console.WriteLine("Token Part: " + tokenParts);
-                }
-                Console.WriteLine("Auth Header: " + authHeader);
-                foreach (string token in _tokenService.getActiveTokens())
-                {
-                    Console.WriteLine("active token: " + token);
-                }
-                Console.WriteLine("active tokens count: " + _tokenService.getActiveTokens().Count);
-                Console.WriteLine("-----------------------------------------------------");
-                return;
-            }
-
+            int userId = await UserAuthorizationAsync(context);
 
             StreamReader stream = new StreamReader(context.Request.InputStream);
             string body = await stream.ReadToEndAsync();
@@ -261,6 +233,43 @@ namespace MediaRatingPlatform_Server
             Console.WriteLine("-----------------------------------------------------");
             await _mediaService.DeleteMediaByTitleAsync(mediaDTO.title);
             WriteResponse(context.Response, "Successfull", "text/plain");
+        }
+
+
+        private async Task<int> UserAuthorizationAsync(HttpListenerContext context)
+        {
+            // get token
+            string authHeader = context.Request.Headers["Authorization"];
+            if (string.IsNullOrWhiteSpace(authHeader))
+            {
+                WriteResponse(context.Response, "Missing Authorization header", "text/plain");
+                Console.WriteLine("Missing Authorization header");
+                throw new Exception();
+            }
+
+            // get userId
+            int userId = _tokenService.GetUserIdFromToken(authHeader);
+
+            if (userId == 0)
+            {
+                WriteResponse(context.Response, "Unauthorized", "text/plain");
+                Console.WriteLine("------------------ USER TOKEN INFO ------------------");
+                foreach (string tokenParts in authHeader.Split('.'))
+                {
+                    Console.WriteLine("Token Part: " + tokenParts);
+                }
+                Console.WriteLine("Auth Header: " + authHeader);
+                foreach (string token in _tokenService.getActiveTokens())
+                {
+                    Console.WriteLine("active token: " + token);
+                }
+                Console.WriteLine("active tokens count: " + _tokenService.getActiveTokens().Count);
+                Console.WriteLine("-----------------------------------------------------");
+                throw new Exception();
+            }
+
+            return userId;
+
         }
     }
 }
