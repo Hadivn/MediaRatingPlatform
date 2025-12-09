@@ -54,6 +54,8 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             }
         }
 
+        public async Task UpdateMedia
+
         // CRUD - Media delete
         public async Task DeleteMediaByTitle(string title)
         {

@@ -57,6 +57,26 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
             };
         }
 
+        // CRUD - User read by username
+        public async Task<UserEntity> GetUserByUsernameAsync(string username)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            string sql = "SELECT id, username, password, is_active, created_at FROM users WHERE username = @u";
+            using var cmd = new NpgsqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@u", username);
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (!await reader.ReadAsync())
+                return null; // user not found
+            
+            return new UserEntity(reader.GetString(1), reader.GetString(2))
+            {
+                id = reader.GetInt32(0),
+                isActive = reader.GetBoolean(3),
+                createdAt = reader.GetDateTime(4)
+            };
+        }
+
         // User update last login
         public async Task UpdateLastLogin(int userId, DateTime time)
         {
