@@ -34,12 +34,16 @@ namespace MediaRatingPlatform_Server
 
             _routes = new Dictionary<(string path, string method), Func<HttpListenerContext, Task>>
             {
+                // Login and Register endpoints
                 { ("/register", "POST"), RegisterHandlerAsync },
                 { ("/login", "POST"), LoginHandlerAsync },
                 // Media endpoints
                 { ("/createMedia", "POST"), CreateMediaHandlerAsync },
                 { ("/readMedia", "GET"), ReadAllMediaHandlerAsync },
-                { ("/deleteMedia", "DELETE"), DeleteMediaHandlerAsync}
+                { ("/deleteMedia", "DELETE"), DeleteMediaHandlerAsync},
+                // User endpoints
+                 { ("/getUserById", "GET"), GetUserByIdHandlerAsync},
+                 { ("/getUserByUsername", "GET"), GetUserByUsernameHandlerAsync}
 
             };
 
@@ -108,7 +112,9 @@ namespace MediaRatingPlatform_Server
         }
 
 
-        // done
+
+        /*--------------------------------- Login & Register Handlers ---------------------------------
+         ------------------------------------------------------------------------------------*/
         private async Task RegisterHandlerAsync(HttpListenerContext context)
         {
             /*
@@ -204,8 +210,17 @@ namespace MediaRatingPlatform_Server
         private async Task UpdateMediaHandlerAsync(HttpListenerContext context)
         {
             int userId = await UserAuthorizationAsync(context);
+            StreamReader stream = new StreamReader(context.Request.InputStream);
+            string body = await stream.ReadToEndAsync();
+            // stream beenden
+            stream.Dispose();
 
-            // await
+            // title that gets searched
+            string title = context.Request.QueryString.Get("title");
+            // update body
+            MediaUpdateDTO mediaUpdateDTO = JsonSerializer.Deserialize<MediaUpdateDTO>(body);
+            await _mediaService.UpdateMediaAsync(title, mediaUpdateDTO);
+
         }
 
 
@@ -235,6 +250,53 @@ namespace MediaRatingPlatform_Server
             WriteResponse(context.Response, "Successfull", "text/plain");
         }
 
+
+
+        /*--------------------------------- User Handlers ---------------------------------
+         ------------------------------------------------------------------------------------*/
+
+        private async Task GetUserByIdHandlerAsync(HttpListenerContext context)
+        {
+            try
+            {
+                await UserAuthorizationAsync(context);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            
+
+            int userId = Int32.Parse(context.Request.QueryString["id"]);
+
+
+            await _userService.GetUserByIdAsync(userId);
+
+            var user = await _userService.GetUserByIdAsync(userId);
+
+            string json = JsonSerializer.Serialize(user);
+            WriteResponse(context.Response, json, "application/json");
+        }
+
+        private async Task GetUserByUsernameHandlerAsync(HttpListenerContext context)
+        {
+            try
+            {
+                await UserAuthorizationAsync(context);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            string username = context.Request.QueryString.Get("username");
+
+
+            var user = await _userService.GetUserByUsernameAsync(username);
+
+            string json = JsonSerializer.Serialize(user);
+            WriteResponse(context.Response, json, "application/json");
+        }
 
         private async Task<int> UserAuthorizationAsync(HttpListenerContext context)
         {

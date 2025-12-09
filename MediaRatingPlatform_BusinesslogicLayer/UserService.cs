@@ -77,6 +77,17 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             }
         }
 
+        // Get User by Id
+        public async Task<UserEntity> GetUserByIdAsync(int userId)
+        {
+            return await _userRepository.GetUserByIdAsync(userId);
+        }
+
+        public async Task<UserEntity> GetUserByUsernameAsync(string username)
+        {
+            return await _userRepository.GetUserByUsernameAsync(username);
+        }
+
 
     }
 }

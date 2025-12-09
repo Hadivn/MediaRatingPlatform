@@ -1,4 +1,5 @@
 ﻿using MediaRatingPlatform_Domain.Entities;
+using MediaRatingPlatform_Domain.DTO;
 using Npgsql;
 using System;
 using System.Collections.Generic;
@@ -54,7 +55,23 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             }
         }
 
-        public async Task UpdateMedia
+        // CRUD - Media update
+        public async Task UpdateMedia(MediaDTO mediaDTO)
+        {
+            if (!await MediaExists(mediaDTO.title))
+            {
+                throw new Exception("Media existiert nicht!");
+            }
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            
+            
+
+            var cmd = new NpgsqlCommand($@"UPDATE media SET {String.Join(',', )}", connection);
+
+
+
+        }
 
         // CRUD - Media delete
         public async Task DeleteMediaByTitle(string title)
@@ -72,8 +89,9 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                 Console.WriteLine("-------------------------------------------------------");
                 throw new Exception($"Error while trying to delete {title}" +
                     $"exception Layer: DataAccessLayer " +
-                    $"exception: {ex.Message}");
-                Console.WriteLine("-------------------------------------------------------");
+                    $"exception: {ex.Message}" +
+                    "-------------------------------------------------------");
+               
             }
 
         }
