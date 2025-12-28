@@ -67,7 +67,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             
             
 
-            var cmd = new NpgsqlCommand($@"UPDATE media SET {String.Join(',', )}", connection);
+           // var cmd = new NpgsqlCommand($@"UPDATE media SET {String.Join(',', )}", connection);
 
 
 

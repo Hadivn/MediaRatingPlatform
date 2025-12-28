@@ -219,7 +219,7 @@ namespace MediaRatingPlatform_Server
             string title = context.Request.QueryString.Get("title");
             // update body
             MediaUpdateDTO mediaUpdateDTO = JsonSerializer.Deserialize<MediaUpdateDTO>(body);
-            await _mediaService.UpdateMediaAsync(title, mediaUpdateDTO);
+           // await _mediaService.UpdateMediaAsync(title, mediaUpdateDTO);
 
         }
 
@@ -320,7 +320,7 @@ namespace MediaRatingPlatform_Server
                 {
                     Console.WriteLine("Token Part: " + tokenParts);
                 }
-                Console.WriteLine("Auth Header: " + authHeader);
+                Console.WriteLine("\nAuth Header: " + authHeader + "\n");
                 foreach (string token in _tokenService.getActiveTokens())
                 {
                     Console.WriteLine("active token: " + token);

@@ -40,7 +40,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
         // CRUD - User read own data
         public async Task<UserEntity> GetUserByIdAsync(int userId)
         {
-           using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
             string sql = "SELECT id, username, password, is_active, created_at FROM users WHERE id = @id";
             using var cmd = new NpgsqlCommand(sql, connection);

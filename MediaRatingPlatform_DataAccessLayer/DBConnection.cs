@@ -29,7 +29,7 @@ namespace MediaRatingPlatform_DataAccessLayer
         }
 
 
-        // changes later, add userId to track which has which entry
+        
         public async Task InitializeDatabase()
         {
             using var _connection = new NpgsqlConnection(_connectionString);
