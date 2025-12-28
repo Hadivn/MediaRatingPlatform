@@ -44,7 +44,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine($"description = {mediaEntity.description}");
                 Console.WriteLine($"updated at = {mediaEntity.updatedAt}");
                 Console.WriteLine($"genres = {mediaEntity.genres}");
-
+                
                 Console.WriteLine($"Creating Media {mediaEntity.title} failed: *{ex.Message}*");
                 Console.WriteLine("------------------------------------------------------------");
             }
@@ -56,6 +56,12 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         public async Task ReadAllMediaAsync()
         {
             await _mediaRepository.ReadAllMediaAsync();
+        }
+
+        // CRUD - Media update
+        public async Task UpdateMediaAsync(MediaUpdateDTO mediaUpdateDTO, string title)
+        {
+            await _mediaRepository.UpdateMediaAsync(mediaUpdateDTO, title);
         }
 
         // CRUD - Media delete
@@ -74,5 +80,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine("------------------------------------------------------------");
             }
         }
+
+       
     }
 }

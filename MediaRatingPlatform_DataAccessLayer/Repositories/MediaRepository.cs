@@ -1,6 +1,7 @@
-﻿using MediaRatingPlatform_Domain.Entities;
-using MediaRatingPlatform_Domain.DTO;
+﻿using MediaRatingPlatform_Domain.DTO;
+using MediaRatingPlatform_Domain.Entities;
 using Npgsql;
+using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,21 +57,65 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
         }
 
         // CRUD - Media update
-        public async Task UpdateMedia(MediaDTO mediaDTO)
+        public async Task UpdateMediaAsync(MediaUpdateDTO mediaUpdateDTO, string title)
         {
-            if (!await MediaExists(mediaDTO.title))
-            {
+            if (!await MediaExists(title))
                 throw new Exception("Media existiert nicht!");
-            }
+
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
-            
-            
 
-           // var cmd = new NpgsqlCommand($@"UPDATE media SET {String.Join(',', )}", connection);
+            var updateFields = new List<string>();
+            using var updateCmd = connection.CreateCommand();
 
+            if (!string.IsNullOrEmpty(mediaUpdateDTO.description))
+            {
+                updateFields.Add("description = @description");
+                updateCmd.Parameters.Add("description", NpgsqlDbType.Text)
+                                    .Value = mediaUpdateDTO.description;
+            }
 
+            if (!string.IsNullOrEmpty(mediaUpdateDTO.mediaType))
+            {
+                updateFields.Add("media_type = @mediaType");
+                updateCmd.Parameters.Add("mediaType", NpgsqlDbType.Text)
+                                    .Value = mediaUpdateDTO.mediaType;
+            }
 
+            if (mediaUpdateDTO.releaseYear != 0)
+            {
+                updateFields.Add("release_year = @releaseYear");
+                updateCmd.Parameters.AddWithValue("releaseYear", mediaUpdateDTO.releaseYear);
+            }
+
+            if (mediaUpdateDTO.ageRestriction != 0)
+            {
+                updateFields.Add("age_restriction = @ageRestriction");
+                updateCmd.Parameters.AddWithValue("ageRestriction", mediaUpdateDTO.ageRestriction);
+            }
+
+            if (!string.IsNullOrEmpty(mediaUpdateDTO.genres))
+            {
+                updateFields.Add("genres = @genres");
+                updateCmd.Parameters.Add("genres", NpgsqlDbType.Text)
+                                    .Value = mediaUpdateDTO.genres;
+            }
+
+            if (!string.IsNullOrEmpty(mediaUpdateDTO.title))
+            {
+                updateFields.Add("title = @newTitle");
+                updateCmd.Parameters.Add("newTitle", NpgsqlDbType.Text)
+                                    .Value = mediaUpdateDTO.title;
+            }
+
+            if (updateFields.Count == 0)
+                return; // nothing to update
+
+            updateCmd.CommandText = $@"UPDATE media SET {String.Join(',', updateFields)} where title = @t";
+
+            updateCmd.Parameters.Add("t", NpgsqlDbType.Text).Value = title;
+
+            await updateCmd.ExecuteNonQueryAsync();
         }
 
         // CRUD - Media delete

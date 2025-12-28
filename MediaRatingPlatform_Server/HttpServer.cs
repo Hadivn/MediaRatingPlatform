@@ -40,6 +40,7 @@ namespace MediaRatingPlatform_Server
                 // Media endpoints
                 { ("/createMedia", "POST"), CreateMediaHandlerAsync },
                 { ("/readMedia", "GET"), ReadAllMediaHandlerAsync },
+                { ("/updateMedia", "PUT"), UpdateMediaHandlerAsync },
                 { ("/deleteMedia", "DELETE"), DeleteMediaHandlerAsync},
                 // User endpoints
                  { ("/getUserById", "GET"), GetUserByIdHandlerAsync},
@@ -219,7 +220,7 @@ namespace MediaRatingPlatform_Server
             string title = context.Request.QueryString.Get("title");
             // update body
             MediaUpdateDTO mediaUpdateDTO = JsonSerializer.Deserialize<MediaUpdateDTO>(body);
-           // await _mediaService.UpdateMediaAsync(title, mediaUpdateDTO);
+            await _mediaService.UpdateMediaAsync(mediaUpdateDTO, title);
 
         }
 
