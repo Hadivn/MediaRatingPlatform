@@ -61,7 +61,18 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         // CRUD - Media update
         public async Task UpdateMediaAsync(MediaUpdateDTO mediaUpdateDTO, string title)
         {
-            await _mediaRepository.UpdateMediaAsync(mediaUpdateDTO, title);
+            try
+            {
+                await _mediaRepository.UpdateMediaAsync(mediaUpdateDTO, title);
+                Console.WriteLine($"Updating Media {title} successfull");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("------------------ MEDIA UPDATE FAILED ------------------");
+                Console.WriteLine($"Updating Media {title} failed: *{ex.Message}*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+            }
         }
 
         // CRUD - Media delete

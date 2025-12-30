@@ -82,13 +82,13 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                                     .Value = mediaUpdateDTO.mediaType;
             }
 
-            if (mediaUpdateDTO.releaseYear != 0)
+            if (mediaUpdateDTO.releaseYear != null)
             {
                 updateFields.Add("release_year = @releaseYear");
                 updateCmd.Parameters.AddWithValue("releaseYear", mediaUpdateDTO.releaseYear);
             }
 
-            if (mediaUpdateDTO.ageRestriction != 0)
+            if (mediaUpdateDTO.ageRestriction != null)
             {
                 updateFields.Add("age_restriction = @ageRestriction");
                 updateCmd.Parameters.AddWithValue("ageRestriction", mediaUpdateDTO.ageRestriction);
@@ -111,7 +111,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             if (updateFields.Count == 0)
                 return; // nothing to update
 
-            updateCmd.CommandText = $@"UPDATE media SET {String.Join(',', updateFields)} where title = @t";
+            updateCmd.CommandText = $"UPDATE media SET {String.Join(',', updateFields)} where title = @t";
 
             updateCmd.Parameters.Add("t", NpgsqlDbType.Text).Value = title;
 

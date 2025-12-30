@@ -218,10 +218,12 @@ namespace MediaRatingPlatform_Server
 
             // title that gets searched
             string title = context.Request.QueryString.Get("title");
+            Console.WriteLine("query: "+ context.Request.QueryString);
+            Console.WriteLine("\n");
             // update body
             MediaUpdateDTO mediaUpdateDTO = JsonSerializer.Deserialize<MediaUpdateDTO>(body);
             await _mediaService.UpdateMediaAsync(mediaUpdateDTO, title);
-
+            WriteResponse(context.Response, "Successfull", "text/plain");
         }
 
 
