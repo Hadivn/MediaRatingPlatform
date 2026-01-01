@@ -2,6 +2,7 @@
 using MediaRatingPlatform_DataAccessLayer.Repositories;
 using MediaRatingPlatform_Domain.DTO;
 using MediaRatingPlatform_Domain.Entities;
+using MediaRatingPlatform_Domain.ENUM;
 using Npgsql;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,10 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         // CRUD - Media create
         public async Task CreateMediaAsync(MediaDTO mediaDTO, int userId)
         {
-            MediaEntity mediaEntity = new MediaEntity(mediaDTO.title, mediaDTO.description, mediaDTO.mediaType,
+
+            // ENUM, from int to MediaType
+            EMediaType eMediaType = (EMediaType) mediaDTO.mediaType;
+            MediaEntity mediaEntity = new MediaEntity(mediaDTO.title, mediaDTO.description, eMediaType,
                 mediaDTO.releaseYear, mediaDTO.genres, mediaDTO.ageRestriction, userId);
 
             try
@@ -34,7 +38,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             catch (Exception ex)
             {
                 Console.WriteLine("------------------ MEDIA CREATION FAILED ------------------");
-                Console.WriteLine($"mediaType = {mediaEntity.mediaType}");
+                Console.WriteLine($"mediaType = {eMediaType}");
                 Console.WriteLine($"releaseYear = {mediaEntity.releaseYear}");
                 Console.WriteLine($"age restriction = {mediaEntity.ageRestriction}");
                 Console.WriteLine($"title = {mediaEntity.title}");
@@ -44,6 +48,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine($"description = {mediaEntity.description}");
                 Console.WriteLine($"updated at = {mediaEntity.updatedAt}");
                 Console.WriteLine($"genres = {mediaEntity.genres}");
+                Console.WriteLine($"userId = {userId}");
                 
                 Console.WriteLine($"Creating Media {mediaEntity.title} failed: *{ex.Message}*");
                 Console.WriteLine("------------------------------------------------------------");
@@ -59,8 +64,13 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         }
 
         // CRUD - Media update
-        public async Task UpdateMediaAsync(MediaUpdateDTO mediaUpdateDTO, string title)
+        public async Task UpdateMediaAsync(MediaUpdateDTO mediaUpdateDTO, string title, int userid)
         {
+            int createdByUserId = await _mediaRepository.GetCreatedByUserId(title);
+            if(createdByUserId != userid)
+            {
+                throw new UnauthorizedAccessException("Not allowed because of userId");
+            }
             try
             {
                 await _mediaRepository.UpdateMediaAsync(mediaUpdateDTO, title);
@@ -91,6 +101,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine("------------------------------------------------------------");
             }
         }
+
 
        
     }

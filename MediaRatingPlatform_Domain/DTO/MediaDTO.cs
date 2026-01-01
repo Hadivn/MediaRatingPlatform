@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MediaRatingPlatform_Domain.ENUM;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,7 +17,7 @@ namespace MediaRatingPlatform_Domain.DTO
         public string description { get; set; }
 
         [JsonPropertyName("media_type")]
-        public string mediaType { get; set; }
+        public EMediaType mediaType { get; set; }
 
         [JsonPropertyName("release_year")]
         public int releaseYear { get; set; }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MediaRatingPlatform_Domain.ENUM;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,7 @@ namespace MediaRatingPlatform_Domain.Entities
         public string title { get; set; } 
         public string description { get; set; }
         [JsonPropertyName("media_type")]
-        public string mediaType { get; set; }
+        public EMediaType mediaType { get; set; }
         [JsonPropertyName("release_year")]
         public int releaseYear { get; set; }
         public string genres { get; set; }
@@ -23,7 +24,7 @@ namespace MediaRatingPlatform_Domain.Entities
         public DateTime updatedAt { get; set; }
         public int userId { get; set; }
 
-        public MediaEntity(string title, string description, string mediaType, int releaseYear,
+        public MediaEntity(string title, string description, EMediaType mediaType, int releaseYear,
             string genres, int ageRestriction, int userId)
         {
             this.title = title;

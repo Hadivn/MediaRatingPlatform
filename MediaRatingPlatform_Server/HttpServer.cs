@@ -222,7 +222,7 @@ namespace MediaRatingPlatform_Server
             Console.WriteLine("\n");
             // update body
             MediaUpdateDTO mediaUpdateDTO = JsonSerializer.Deserialize<MediaUpdateDTO>(body);
-            await _mediaService.UpdateMediaAsync(mediaUpdateDTO, title);
+            await _mediaService.UpdateMediaAsync(mediaUpdateDTO, title, userId);
             WriteResponse(context.Response, "Successfull", "text/plain");
         }
 

@@ -26,18 +26,19 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             await connection.OpenAsync();
 
             var cmd = new NpgsqlCommand(@"
-                INSERT INTO media (title, description, media_type, release_year, genres, age_restriction, created_at, updated_at)
-                VALUES (@title, @description, @mediaType, @releaseYear, @genres, @ageRestriction, @createdAt, @updatedAt);
+                INSERT INTO media (title, description, media_type, release_year, genres, age_restriction, created_at, updated_at, user_id)
+                VALUES (@title, @description, @mediaType, @releaseYear, @genres, @ageRestriction, @createdAt, @updatedAt, @userId);
             ", connection);
 
             cmd.Parameters.AddWithValue("@title", mediaEntity.title);
             cmd.Parameters.AddWithValue("@description", mediaEntity.description);
-            cmd.Parameters.AddWithValue("@mediaType", mediaEntity.mediaType ?? (object)DBNull.Value); 
+            cmd.Parameters.AddWithValue("@mediaType", mediaEntity.mediaType.ToString()); 
             cmd.Parameters.AddWithValue("@genres", mediaEntity.genres);
             cmd.Parameters.AddWithValue("@releaseYear", mediaEntity.releaseYear);
             cmd.Parameters.AddWithValue("@ageRestriction", mediaEntity.ageRestriction);
             cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
             cmd.Parameters.AddWithValue("@updatedAt", mediaEntity.updatedAt);
+            cmd.Parameters.AddWithValue("@userId", mediaEntity.userId);
 
             await cmd.ExecuteNonQueryAsync();
 
@@ -52,7 +53,16 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                Console.WriteLine($"Title: {reader["title"]}, Description: {reader["description"]}");
+                Console.WriteLine($"Title: {reader["title"]}");
+                Console.WriteLine($"description: {reader["description"]}");
+                Console.WriteLine($"mediaType: {reader["media_type"]}");
+                Console.WriteLine($"mediaType typeof name: {reader["media_type"].GetType().Name}");
+                Console.WriteLine($"genres: {reader["genres"]}");
+                Console.WriteLine($"releaseYear: {reader["release_year"]}");
+                Console.WriteLine($"ageRestriction: {reader["age_restriction"]}");
+                Console.WriteLine($"createdAt: {reader["created_at"]}");
+                Console.WriteLine($"userId: {reader["user_id"]}");
+                Console.WriteLine("----------------------------------------");
             }
         }
 
@@ -141,6 +151,8 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 
         }
 
+
+        // hilfsmethoden
         public async Task<bool> MediaExists(string title)
         {
             using var connection = new NpgsqlConnection(_connectionString);
@@ -151,6 +163,18 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 
             var count = (long)await mediaExistsCmd.ExecuteScalarAsync();
             return count > 0;
+        }
+
+        public async Task<int> GetCreatedByUserId(string title)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var mediaExistsCmd = new NpgsqlCommand("SELECT user_id FROM media WHERE title = @t", connection);
+            mediaExistsCmd.Parameters.AddWithValue("t", title);
+
+            int createdByUserId = (int)await mediaExistsCmd.ExecuteScalarAsync();
+            return createdByUserId;
         }
 
        
