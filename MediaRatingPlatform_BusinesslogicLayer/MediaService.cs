@@ -69,7 +69,8 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             int createdByUserId = await _mediaRepository.GetCreatedByUserId(title);
             if(createdByUserId != userid)
             {
-                throw new UnauthorizedAccessException("Not allowed because of userId");
+                Console.WriteLine("Not allowed because of wrong userId\n----------------------------------");
+                return;
             }
             try
             {
@@ -86,8 +87,14 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         }
 
         // CRUD - Media delete
-        public async Task DeleteMediaByTitleAsync(string title)
+        public async Task DeleteMediaByTitleAsync(string title, int userid)
         {
+            int createdByUserId = await _mediaRepository.GetCreatedByUserId(title);
+            if (createdByUserId != userid)
+            {
+                Console.WriteLine("Not allowed because of wrong userId\n----------------------------------");
+                return;
+            }
             try
             {
                 await _mediaRepository.DeleteMediaByTitle(title);
@@ -102,7 +109,37 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             }
         }
 
+        public async Task RateMediaAsync(MediaRatingDTO mediaRatingDTO, string title, int userId)
+        {
+            int createdByUserId = await _mediaRepository.GetCreatedByUserId(title);
+            if (createdByUserId != userId)
+            {
+                Console.WriteLine("Not allowed because of wrong userId\n----------------------------------");
+                return;
+            }
 
-       
+            int mediaId = await _mediaRepository.GetMediaIdByTitle(title);
+            MediaRatingEntity mediaRatingEntity = new MediaRatingEntity(mediaRatingDTO.star, mediaRatingDTO.comment, userId, mediaId, mediaRatingDTO.isConfirmed);
+
+            try
+            {
+                await _mediaRepository.RateMediaAsync(mediaRatingEntity);
+                Console.WriteLine($"rating Media {title} successfull");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("------------------ CREATING MEDIA RATING FAILED ------------------");
+                Console.WriteLine($"rating Media {title} failed: *{ex.Message}*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+            }
+
+        }
+
+        public async Task<int> GetMediaId(string title)
+        {
+            return await _mediaRepository.GetMediaIdByTitle(title);
+        }
+
     }
 }

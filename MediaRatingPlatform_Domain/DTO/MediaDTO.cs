@@ -27,6 +27,8 @@ namespace MediaRatingPlatform_Domain.DTO
 
         [JsonPropertyName("genres")]
         public string genres { get; set; }
+
+        
     }
 
 }

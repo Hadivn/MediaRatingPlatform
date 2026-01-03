@@ -63,6 +63,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 {
                     await _userRepository.UpdateLastLogin(userLogin.id, DateTime.UtcNow);
                     Console.WriteLine("User successfully logged in!");
+                    Console.WriteLine($"User ID: {userLogin.id}");
                     string token = _tokenService.GenerateToken(userLogin.id, userLogin.username);
                     return token;
                 }

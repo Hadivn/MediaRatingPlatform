@@ -5,7 +5,7 @@ using MediaRatingPlatform_Server;
 using MediaRatingPlatform_DataAccessLayer;
 using MediaRatingPlatform_BusinessLogicLayer.Repositories;
 
-DBConnection dbConnection = new DBConnection("Host=localhost;Port=5432;Username=mrpdatabase;Password=user;Database=mrpdatabase");
+DBConnection dbConnection = new DBConnection("Host=192.168.0.53;Port=5432;Username=mrpdatabase;Password=user;Database=mrpdatabase");
 await dbConnection.ConnectToDatabaseAsync();
 await dbConnection.InitializeDatabase();
 

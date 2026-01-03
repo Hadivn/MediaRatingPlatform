@@ -37,11 +37,14 @@ namespace MediaRatingPlatform_Server
                 // Login and Register endpoints
                 { ("/register", "POST"), RegisterHandlerAsync },
                 { ("/login", "POST"), LoginHandlerAsync },
-                // Media endpoints
+                // CRUD-Media endpoints
                 { ("/createMedia", "POST"), CreateMediaHandlerAsync },
                 { ("/readMedia", "GET"), ReadAllMediaHandlerAsync },
                 { ("/updateMedia", "PUT"), UpdateMediaHandlerAsync },
                 { ("/deleteMedia", "DELETE"), DeleteMediaHandlerAsync},
+                // Media endpoints
+                { ("/rateMedia", "POST"), RateMediaHandlerAsync},
+
                 // User endpoints
                  { ("/getUserById", "GET"), GetUserByIdHandlerAsync},
                  { ("/getUserByUsername", "GET"), GetUserByUsernameHandlerAsync}
@@ -101,7 +104,7 @@ namespace MediaRatingPlatform_Server
         }
         public void Close() { _listener.Close(); }
 
-        // should include response code as 4th argument
+        // should include response code as 4th argument??
         private void WriteResponse(HttpListenerResponse response, string text, string contentType = "text/plain")
         {
             byte[] buffer = Encoding.UTF8.GetBytes(text);
@@ -164,7 +167,7 @@ namespace MediaRatingPlatform_Server
             WriteResponse(context.Response, json, "application/json");
         }
 
-        /*--------------------------------- Media Handlers ---------------------------------
+        /*--------------------------------- CRUD-Media Handlers ---------------------------------
          ------------------------------------------------------------------------------------*/
 
         // CRUD - Create, Read, Update, Delete
@@ -249,11 +252,31 @@ namespace MediaRatingPlatform_Server
                 Console.WriteLine("active token: " + token);
             }
             Console.WriteLine("-----------------------------------------------------");
-            await _mediaService.DeleteMediaByTitleAsync(mediaDTO.title);
+            await _mediaService.DeleteMediaByTitleAsync(mediaDTO.title, userId);
             WriteResponse(context.Response, "Successfull", "text/plain");
         }
 
+        /*--------------------------------- Media Handlers ---------------------------------
+         ------------------------------------------------------------------------------------*/
+        private async Task RateMediaHandlerAsync(HttpListenerContext context)
+        {
+            int userId = await UserAuthorizationAsync(context);
+            StreamReader stream = new StreamReader(context.Request.InputStream);
+            string body = await stream.ReadToEndAsync();
+            // stream beenden
+            stream.Dispose();
 
+            MediaRatingDTO mediaRatingDTO = JsonSerializer.Deserialize<MediaRatingDTO>(body);
+
+            // title that gets searched
+            string title = context.Request.QueryString.Get("title");
+            Console.WriteLine("query: " + context.Request.QueryString);
+            Console.WriteLine("\n");
+            
+            await _mediaService.RateMediaAsync(mediaRatingDTO, title, userId);
+            WriteResponse(context.Response, "Successfull", "text/plain");
+
+        }
 
         /*--------------------------------- User Handlers ---------------------------------
          ------------------------------------------------------------------------------------*/
@@ -300,6 +323,9 @@ namespace MediaRatingPlatform_Server
             string json = JsonSerializer.Serialize(user);
             WriteResponse(context.Response, json, "application/json");
         }
+
+        // Get My User Info
+        // private async Task Get
 
         private async Task<int> UserAuthorizationAsync(HttpListenerContext context)
         {

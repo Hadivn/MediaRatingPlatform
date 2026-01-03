@@ -12,7 +12,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 {
     public class MediaRepository
     {
-        private string _connectionString = "Host=localhost;Port=5432;Username=mrpdatabase;Password=user;Database=mrpdatabase";
+        private string _connectionString = "Host=192.168.0.53;Port=5432;Username=mrpdatabase;Password=user;Database=mrpdatabase";
 
         // CRUD - Media create
         public async Task CreateMediaAsync(MediaEntity mediaEntity)
@@ -151,6 +151,28 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 
         }
 
+        public async Task RateMediaAsync(MediaRatingEntity mediaRatingEntity)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var cmd = new NpgsqlCommand(@"
+                INSERT INTO ratings (star, comment, created_at, user_id, media_id, is_confirmed)
+                VALUES (@star, @comment, @createdAt, @userId, @mediaId, @isConfirmed);
+            ", connection);
+
+            cmd.Parameters.AddWithValue("@star", mediaRatingEntity.star);
+            cmd.Parameters.AddWithValue("@comment", mediaRatingEntity.comment ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@userId", mediaRatingEntity.userId);
+            cmd.Parameters.AddWithValue("@mediaId", mediaRatingEntity.mediaId);
+            // hier oder im konstruktor?
+            cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
+            cmd.Parameters.AddWithValue("@isConfirmed", mediaRatingEntity.isConfirmed);
+
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
 
         // hilfsmethoden
         public async Task<bool> MediaExists(string title)
@@ -177,9 +199,19 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             return createdByUserId;
         }
 
-       
+        public async Task<int> GetMediaIdByTitle(string title)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var mediaIdCmd = new NpgsqlCommand("SELECT id FROM media WHERE title = @t", connection);
+            mediaIdCmd.Parameters.AddWithValue("t", title);
+            int mediaId = (int)await mediaIdCmd.ExecuteScalarAsync();
+            return mediaId;
+        }
 
 
-      
+
+
+
     }
 }
