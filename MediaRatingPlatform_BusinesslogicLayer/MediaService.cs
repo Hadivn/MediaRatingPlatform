@@ -99,6 +99,12 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             {
                 await _mediaRepository.DeleteMediaByTitle(title);
                 Console.WriteLine($"Deleting Media {title} successfull");
+            } catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "P0001")
+            {
+                Console.WriteLine("------------------ MEDIA DELETION FAILED ------------------");
+                Console.WriteLine($"Deleting Media {title} failed: *Media does not exist.*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
             }
             catch (Exception ex)
             {
@@ -109,15 +115,10 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             }
         }
 
+        // --------------------------------- Media Rating --------------------------------
         public async Task RateMediaAsync(MediaRatingDTO mediaRatingDTO, string title, int userId)
         {
-            int createdByUserId = await _mediaRepository.GetCreatedByUserId(title);
-            if (createdByUserId != userId)
-            {
-                Console.WriteLine("Not allowed because of wrong userId\n----------------------------------");
-                return;
-            }
-
+        
             int mediaId = await _mediaRepository.GetMediaIdByTitle(title);
             MediaRatingEntity mediaRatingEntity = new MediaRatingEntity(mediaRatingDTO.star, mediaRatingDTO.comment, userId, mediaId, mediaRatingDTO.isConfirmed);
 
@@ -125,13 +126,15 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             {
                 await _mediaRepository.RateMediaAsync(mediaRatingEntity);
                 Console.WriteLine($"rating Media {title} successfull");
-            } catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "23503")
+            }
+            catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "23503")
             {
                 Console.WriteLine("------------------ CREATING MEDIA RATING FAILED ------------------");
                 Console.WriteLine($"rating Media {title} failed: *Media does not exist.*");
                 Console.WriteLine("Exception in BusinessLogic-Layer");
                 Console.WriteLine("------------------------------------------------------------");
-            } catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "23505")
+            }
+            catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "23505")
             {
                 Console.WriteLine("------------------ CREATING MEDIA RATING FAILED ------------------");
                 Console.WriteLine($"rating Media {title} failed: *User has already rated this media.*");
@@ -147,7 +150,6 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             }
 
         }
-
         public async Task LikeRatingAsync(LikeRatingDTO likeRatingDTO, int userId)
         {
             if (!await _mediaRepository.IsRatingPublic(likeRatingDTO.ratingId))
@@ -185,6 +187,45 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             
 
 
+        }
+
+        public async Task DeleteRatingAsync(int ratingId, int userId)
+        {
+
+            int createdByUserId = await _mediaRepository.GetUserIdByRatingId(ratingId);
+            if (createdByUserId != userId)
+            {
+                Console.WriteLine("Not allowed because of wrong userId\n----------------------------------");
+                return;
+            }
+
+            try
+            {
+                await _mediaRepository.DeleteRatingAsync(ratingId);
+                Console.WriteLine($"Deleting Rating {ratingId} successfull");
+            }
+            catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "P0001")
+            {
+                Console.WriteLine("------------------ DELETING RATING FAILED ------------------");
+                Console.WriteLine($"Deleting Rating {ratingId} failed: *Rating does not exist.*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+            }
+            catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "23503")
+            {
+                Console.WriteLine("------------------ DELETING RATING FAILED ------------------");
+                Console.WriteLine($"Deleting Rating {ratingId} failed: *Rating is referenced by other entities.*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("------------------ DELETING RATING FAILED ------------------");
+                Console.WriteLine($"Deleting Rating {ratingId} failed: *{ex.Message}*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+
+            }
         }
 
         public async Task<int> GetMediaId(string title)

@@ -38,12 +38,15 @@ namespace MediaRatingPlatform_Server
                 { ("/register", "POST"), RegisterHandlerAsync },
                 { ("/login", "POST"), LoginHandlerAsync },
                 // CRUD-Media endpoints
-                { ("/createMedia", "POST"), CreateMediaHandlerAsync },
-                { ("/readMedia", "GET"), ReadAllMediaHandlerAsync },
-                { ("/updateMedia", "PUT"), UpdateMediaHandlerAsync },
-                { ("/deleteMedia", "DELETE"), DeleteMediaHandlerAsync},
+                // ich hätte nur einmal /media machen sollen und dann POST, GET, PUT, DELETE
+                { ("/Media", "POST"), CreateMediaHandlerAsync },
+                { ("/Media", "GET"), ReadAllMediaHandlerAsync },
+                { ("/Media", "PUT"), UpdateMediaHandlerAsync },
+                { ("/Media", "DELETE"), DeleteMediaHandlerAsync},
                 // Media endpoints
                 { ("/rateMedia", "POST"), RateMediaHandlerAsync},
+                // update { ("/rateMedia", "POST"), RateMediaHandlerAsync},
+                { ("/rateMedia", "DELETE"), DeleteRateMediaHandlerAsync},
                 { ("/likeRating", "POST"), LikeCommentHandlerAsync},
 
                 // User endpoints
@@ -257,7 +260,7 @@ namespace MediaRatingPlatform_Server
             WriteResponse(context.Response, "Successfull", "text/plain");
         }
 
-        /*--------------------------------- Media Handlers ---------------------------------
+        /*--------------------------------- Media Rating Handlers ---------------------------------
          ------------------------------------------------------------------------------------*/
         private async Task RateMediaHandlerAsync(HttpListenerContext context)
         {
@@ -279,6 +282,19 @@ namespace MediaRatingPlatform_Server
 
         }
 
+        private async Task DeleteRateMediaHandlerAsync(HttpListenerContext context)
+        {
+            int userId = await UserAuthorizationAsync(context);
+            // using to auto dispose stream
+            using StreamReader stream = new StreamReader(context.Request.InputStream);
+            string body = await stream.ReadToEndAsync();
+            int ratingId = int.Parse(context.Request.QueryString.Get("ratingId"));
+            Console.WriteLine("ratingId: " + ratingId);
+      
+
+            await _mediaService.DeleteRatingAsync(ratingId, userId);
+            WriteResponse(context.Response, "Successfull", "text/plain");
+        }
 
         private async Task LikeCommentHandlerAsync(HttpListenerContext context)
         {

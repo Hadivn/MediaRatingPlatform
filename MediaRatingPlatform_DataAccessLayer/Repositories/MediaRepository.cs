@@ -190,6 +190,16 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             await cmd.ExecuteNonQueryAsync();
         }
 
+        public async Task DeleteRatingAsync(int ratingId)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var deleteCmd = new NpgsqlCommand("DELETE FROM ratings WHERE id = @id", connection);
+            deleteCmd.Parameters.AddWithValue("id", ratingId);
+            await deleteCmd.ExecuteNonQueryAsync();
+        }
+
+
         // hilfsmethoden
         public async Task<bool> MediaExists(string title)
         {
@@ -237,6 +247,15 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             return isPublic;
         }
 
+        public async Task<int> GetUserIdByRatingId(int ratingId)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var getUserIdCmd = new NpgsqlCommand("SELECT user_id FROM ratings WHERE id = @id", connection);
+            getUserIdCmd.Parameters.AddWithValue("id", ratingId);
+            int userId = (int)await getUserIdCmd.ExecuteScalarAsync();
+            return userId;
+        }
 
 
 
