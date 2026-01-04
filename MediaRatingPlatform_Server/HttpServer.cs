@@ -44,6 +44,7 @@ namespace MediaRatingPlatform_Server
                 { ("/deleteMedia", "DELETE"), DeleteMediaHandlerAsync},
                 // Media endpoints
                 { ("/rateMedia", "POST"), RateMediaHandlerAsync},
+                { ("/likeRating", "POST"), LikeCommentHandlerAsync},
 
                 // User endpoints
                  { ("/getUserById", "GET"), GetUserByIdHandlerAsync},
@@ -274,6 +275,22 @@ namespace MediaRatingPlatform_Server
             Console.WriteLine("\n");
             
             await _mediaService.RateMediaAsync(mediaRatingDTO, title, userId);
+            WriteResponse(context.Response, "Successfull", "text/plain");
+
+        }
+
+
+        private async Task LikeCommentHandlerAsync(HttpListenerContext context)
+        {
+            int userId = await UserAuthorizationAsync(context);
+            StreamReader stream = new StreamReader(context.Request.InputStream);
+            string body = await stream.ReadToEndAsync();
+            // stream beenden
+            stream.Dispose();
+
+            LikeRatingDTO mediaLikeDTO = JsonSerializer.Deserialize<LikeRatingDTO>(body);
+
+            await _mediaService.LikeRatingAsync(mediaLikeDTO, userId);
             WriteResponse(context.Response, "Successfull", "text/plain");
 
         }

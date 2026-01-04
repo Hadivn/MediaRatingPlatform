@@ -173,6 +173,22 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             await cmd.ExecuteNonQueryAsync();
         }
 
+        public async Task LikeRatingAsync(LikeRatingEntity likeRatingEntity)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var cmd = new NpgsqlCommand(@"
+                INSERT INTO likes (rating_id, user_id, created_at)
+                VALUES (@ratingId, @userId, @createdAt);
+            ", connection);
+
+            cmd.Parameters.AddWithValue("@ratingId", likeRatingEntity.ratingId);
+            cmd.Parameters.AddWithValue("@userId", likeRatingEntity.userId);
+            cmd.Parameters.AddWithValue("@createdAt", likeRatingEntity.createdAt);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
 
         // hilfsmethoden
         public async Task<bool> MediaExists(string title)
@@ -207,6 +223,18 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             mediaIdCmd.Parameters.AddWithValue("t", title);
             int mediaId = (int)await mediaIdCmd.ExecuteScalarAsync();
             return mediaId;
+        }
+
+        public async Task<bool> IsRatingPublic(int ratingId)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var isRatingPublicCmd = new NpgsqlCommand("SELECT is_confirmed FROM ratings WHERE id = @id", connection);
+            isRatingPublicCmd.Parameters.AddWithValue("id", ratingId);
+
+            bool isPublic = (bool)await isRatingPublicCmd.ExecuteScalarAsync();
+
+            return isPublic;
         }
 
 

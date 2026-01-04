@@ -125,6 +125,18 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             {
                 await _mediaRepository.RateMediaAsync(mediaRatingEntity);
                 Console.WriteLine($"rating Media {title} successfull");
+            } catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "23503")
+            {
+                Console.WriteLine("------------------ CREATING MEDIA RATING FAILED ------------------");
+                Console.WriteLine($"rating Media {title} failed: *Media does not exist.*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+            } catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "23505")
+            {
+                Console.WriteLine("------------------ CREATING MEDIA RATING FAILED ------------------");
+                Console.WriteLine($"rating Media {title} failed: *User has already rated this media.*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
             }
             catch (Exception ex)
             {
@@ -133,6 +145,45 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine("Exception in BusinessLogic-Layer");
                 Console.WriteLine("------------------------------------------------------------");
             }
+
+        }
+
+        public async Task LikeRatingAsync(LikeRatingDTO likeRatingDTO, int userId)
+        {
+            if (!await _mediaRepository.IsRatingPublic(likeRatingDTO.ratingId))
+            {
+                throw new Exception("Cannot like a private rating.");
+            }
+            LikeRatingEntity likeRatingEntity = new LikeRatingEntity(likeRatingDTO.ratingId, userId);
+            try
+            {
+                await _mediaRepository.LikeRatingAsync(likeRatingEntity);
+            }
+            catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "23505")
+            {
+                Console.WriteLine("------------------ LIKING RATING FAILED ------------------");
+                Console.WriteLine($"Liking Rating {likeRatingDTO.ratingId} failed: *Rating already liked by this user.*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+
+
+            }
+            catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "23503")
+            {
+                Console.WriteLine("------------------ LIKING RATING FAILED ------------------");
+                Console.WriteLine($"Liking Rating {likeRatingDTO.ratingId} failed: *Rating does not exist.*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("------------------ LIKING RATING FAILED ------------------");
+                Console.WriteLine($"Liking Rating {likeRatingDTO.ratingId} failed: *{ex.Message}*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+            }
+            
+
 
         }
 
