@@ -187,11 +187,17 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             {
                 Console.WriteLine($"Id: {reader["id"]}");
                 Console.WriteLine($"Star: {reader["star"]}");
-                Console.WriteLine($"Comment: {reader["comment"]}");
+                if (reader["is_confirmed"].Equals(true))
+                {
+                    Console.WriteLine($"IsConfirmed: {reader["is_confirmed"]}");
+                    Console.WriteLine($"Comment: {reader["comment"]}");
+                }
+                else {
+                    Console.WriteLine($"IsConfirmed : {reader["is_confirmed"]}");
+                }
                 Console.WriteLine($"CreatedAt: {reader["created_at"]}");
                 Console.WriteLine($"UserId: {reader["user_id"]}");
                 Console.WriteLine($"MediaId: {reader["media_id"]}");
-                Console.WriteLine($"IsConfirmed: {reader["is_confirmed"]}");
                 Console.WriteLine("----------------------------------------");
             }
 
@@ -368,9 +374,16 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                 
                 Console.WriteLine($"Id: {id}");
                 Console.WriteLine($"Star: {star}");
-                Console.WriteLine($"Comment: {comment}");
+                if (reader["is_confirmed"].Equals(true))
+                {
+                    Console.WriteLine($"IsConfirmed: {reader["is_confirmed"]}");
+                    Console.WriteLine($"Comment: {reader["comment"]}");
+                }
+                else
+                {
+                    Console.WriteLine($"IsConfirmed : {reader["is_confirmed"]}");
+                }
                 Console.WriteLine($"CreatedAt: {createdAt}");
-                Console.WriteLine($"IsConfirmed: {isConfirmed}");
                 Console.WriteLine($"UserId: {userIdRead}");
                 Console.WriteLine($"MediaId: {mediaId}");
                 Console.WriteLine("----------------------------------------");
