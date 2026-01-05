@@ -53,6 +53,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
+                Console.WriteLine($"Id: {reader["id"]}");
                 Console.WriteLine($"Title: {reader["title"]}");
                 Console.WriteLine($"description: {reader["description"]}");
                 Console.WriteLine($"mediaType: {reader["media_type"]}");
@@ -269,11 +270,12 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 
         }
 
-        public async Task ReadAllMediaFavoritesAsync()
+        public async Task GetFavoritesAsync(int userId)
         {
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
-            var cmd = new NpgsqlCommand("SELECT * FROM favorites", connection);
+            var cmd = new NpgsqlCommand("SELECT * FROM favorites where user_id = @id", connection);
+            cmd.Parameters.AddWithValue("id", userId);
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -327,9 +329,53 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 
         }
 
+        public async Task GetMediaStatsAsync(int mediaId)
+        {
+            Console.WriteLine("-------------------- media statistics --------------------------");
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            NpgsqlCommand cmd = new NpgsqlCommand("SELECT Count(r.id) as total_ratings," +
+                " AVG(r.star) as star_avg" +
+                " FROM ratings r" +
+                " where r.media_id = @mediaId", connection);
+            cmd.Parameters.AddWithValue("mediaId", mediaId);
+            using var reader = await cmd.ExecuteReaderAsync();
+            await reader.ReadAsync();
+            long ratingCount = reader.GetInt64(0);
+            double starAvg = reader.IsDBNull(1) ? 0 : reader.GetDouble(1);
+            Console.WriteLine($"Total Ratings: {ratingCount}");
+            Console.WriteLine($"Star Average: {Math.Round(starAvg, 2)}");
+        }
 
 
-
+        public async Task GetRatingHistoryAsync(int userId)
+        {
+            Console.WriteLine("-------------------- rating history --------------------------");
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            NpgsqlCommand cmd = new NpgsqlCommand("SELECT * FROM ratings where user_id = @id", connection);
+            cmd.Parameters.AddWithValue("id", userId);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                int id = reader.GetInt32(0);
+                int star = reader.GetInt32(1);
+                string comment = reader.IsDBNull(2) ? "N/A" : reader.GetString(2);
+                DateTime createdAt = reader.GetDateTime(3);
+                bool isConfirmed = reader.GetBoolean(4);
+                int userIdRead = reader.GetInt32(5);
+                int mediaId = reader.GetInt32(6);
+                
+                Console.WriteLine($"Id: {id}");
+                Console.WriteLine($"Star: {star}");
+                Console.WriteLine($"Comment: {comment}");
+                Console.WriteLine($"CreatedAt: {createdAt}");
+                Console.WriteLine($"IsConfirmed: {isConfirmed}");
+                Console.WriteLine($"UserId: {userIdRead}");
+                Console.WriteLine($"MediaId: {mediaId}");
+                Console.WriteLine("----------------------------------------");
+            }
+        }
 
 
 

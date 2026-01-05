@@ -284,9 +284,9 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             }
         }
 
-        public async Task ReadAllFavoriteMediaAsync()
+        public async Task GetFavoritesAsync(int userId)
         {
-            await _mediaRepository.ReadAllMediaFavoritesAsync();
+            await _mediaRepository.GetFavoritesAsync(userId);
         }
 
         public async Task UnfavoriteMediaAsync(int mediaId, int userId)
@@ -312,12 +312,22 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             }
         }
 
-        // --------------------------------- Personal Stats --------------------------------
+        // --------------------------------- Statistics --------------------------------
 
         public async Task GetPersonalStatsAsync(int userId)
         {
             await _mediaRepository.GetPersonalStatsAsync(userId);
 
+        }
+
+        public async Task GetMediaStatsAsync(int mediaId)
+        {
+            await _mediaRepository.GetMediaStatsAsync(mediaId);
+        }
+
+        public async Task GetRatingHistoryAsync(int userId)
+        {
+            await _mediaRepository.GetRatingHistoryAsync(userId);
         }
     }
 }

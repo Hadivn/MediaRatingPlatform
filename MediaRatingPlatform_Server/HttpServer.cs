@@ -52,10 +52,12 @@ namespace MediaRatingPlatform_Server
                 { ("/likeRating", "POST"), LikeCommentHandlerAsync},
                 // Favorite endpoints
                 {  ("/favoriteMedia", "POST"), FavoriteMediaHandlerAsync },
-                { ("/favoriteMedia", "GET"), ReadFavoriteMediaHandlerAsync},
+                { ("/favoriteMedia", "GET"), GetFavoritesMediaHandlerAsync},
                 { ("/favoriteMedia", "DELETE"), UnfavoriteMediaHandlerAsync},
-                // Personal statistics endpoints
+                // statistics endpoints
                 {  ("/personalStats", "GET"), PersonalStatsHandlerAsync },
+                {  ("/mediaStats", "GET"), MediaStatsHandlerAsync },
+                {  ("/ratingHistory", "GET"), RatingHistoryHandlerAsync },
                 // User endpoints
                  { ("/getUserById", "GET"), GetUserByIdHandlerAsync},
                  { ("/getUserByUsername", "GET"), GetUserByUsernameHandlerAsync}
@@ -354,9 +356,10 @@ namespace MediaRatingPlatform_Server
             WriteResponse(context.Response, "Successfull", "text/plain");
         }
 
-        private async Task ReadFavoriteMediaHandlerAsync(HttpListenerContext context)
+        private async Task GetFavoritesMediaHandlerAsync(HttpListenerContext context)
         {
-            await _mediaService.ReadAllFavoriteMediaAsync();
+            int userId = await UserAuthorizationAsync(context);
+            await _mediaService.GetFavoritesAsync(userId);
             WriteResponse(context.Response, "Read Media Favorites Successfull", "application/json");
         }
 
@@ -370,7 +373,7 @@ namespace MediaRatingPlatform_Server
             WriteResponse(context.Response, "Successfull", "text/plain");
         }
 
-        /*--------------------------------- Media Rating Handlers ---------------------------------
+        /*--------------------------------- Statistics ---------------------------------
          ------------------------------------------------------------------------------------*/
 
         private async Task PersonalStatsHandlerAsync(HttpListenerContext context)
@@ -383,7 +386,23 @@ namespace MediaRatingPlatform_Server
             WriteResponse(context.Response, "Read Personal Stats Successfull", "application/json");
         }
 
+        private async Task MediaStatsHandlerAsync(HttpListenerContext context)
+        {
+            int userId = await UserAuthorizationAsync(context);
+            using StreamReader stream = new StreamReader(context.Request.InputStream);
+            string body = await stream.ReadToEndAsync();
+            int mediaId = int.Parse(context.Request.QueryString.Get("mediaId"));
 
+            await _mediaService.GetMediaStatsAsync(mediaId);
+            WriteResponse(context.Response, "Read Media Stats Successfull", "application/json");
+        }
+
+        private async Task RatingHistoryHandlerAsync(HttpListenerContext context)
+        {
+            int userId = await UserAuthorizationAsync(context);
+            await _mediaService.GetRatingHistoryAsync(userId);
+            WriteResponse(context.Response, "Read Rating History Successfull", "application/json");
+        }
 
 
         /*--------------------------------- User Handlers ---------------------------------
