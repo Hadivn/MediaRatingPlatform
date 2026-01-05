@@ -334,5 +334,15 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         {
             await _mediaRepository.GetLeaderboardAsync();
         }
+
+
+        // --------------------------------- Search --------------------------------
+
+        public async Task<string> SearchMediaAsync(string title)
+        {
+           return await _mediaRepository.SearchMediaAsync(title);
+
+
+        }
     }
 }

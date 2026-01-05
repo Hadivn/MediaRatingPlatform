@@ -61,8 +61,9 @@ namespace MediaRatingPlatform_Server
                 {  ("/leaderboard", "GET"), LeaderboardHandlerAsync  },
                 // User endpoints
                  { ("/getUserById", "GET"), GetUserByIdHandlerAsync},
-                 { ("/getUserByUsername", "GET"), GetUserByUsernameHandlerAsync}
-
+                 { ("/getUserByUsername", "GET"), GetUserByUsernameHandlerAsync},
+                // search title partial matching
+                {  ("/searchMedia", "GET"), SearchMediaHandlerAsync }
             };
 
 
@@ -456,6 +457,19 @@ namespace MediaRatingPlatform_Server
             string json = JsonSerializer.Serialize(user);
             WriteResponse(context.Response, json, "application/json");
         }
+
+        /*--------------------------------- User Handlers ---------------------------------
+         ------------------------------------------------------------------------------------*/
+
+        private async Task SearchMediaHandlerAsync(HttpListenerContext context)
+        {
+            string title = context.Request.QueryString.Get("title");
+            string media = await _mediaService.SearchMediaAsync(title);
+            string json = JsonSerializer.Serialize(media);
+            WriteResponse(context.Response, json, "application/json");
+        }
+
+
 
         // Get My User Info
         // private async Task Get

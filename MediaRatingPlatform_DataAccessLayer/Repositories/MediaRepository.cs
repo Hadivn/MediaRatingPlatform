@@ -409,8 +409,31 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
         }
 
 
+        // --------------------------------- Search --------------------------------
 
+        public async Task<string> SearchMediaAsync(string title)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
 
+            for(int i = title.Length; i >= 3; i--)
+            {
+                string subTitle = title.Substring(0, i);
+                NpgsqlCommand cmdTest = new NpgsqlCommand("SELECT title FROM media WHERE title ILIKE @title", connection);
+                cmdTest.Parameters.AddWithValue("title", $"%{subTitle}%");
+                using NpgsqlDataReader readerTest = await cmdTest.ExecuteReaderAsync();
+                if (await readerTest.ReadAsync())
+                {
+                    Console.WriteLine($"Found matching title: {readerTest["title"]}");
+                    return readerTest["title"].ToString();
+                }
+               
+                
+            }
+
+           
+            return "no title has been found!";
+        }
 
 
         //----------------------------------- hilfsmethoden ---------------------------------
