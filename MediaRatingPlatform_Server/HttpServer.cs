@@ -1,6 +1,7 @@
 ﻿using MediaRatingPlatform_BusinessLogicLayer;
 using MediaRatingPlatform_Domain.DTO;
 using MediaRatingPlatform_Domain.Entities;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,7 +50,10 @@ namespace MediaRatingPlatform_Server
                 { ("/rateMedia", "PUT"), UpdateRateMediaHandlerAsync},
                 { ("/rateMedia", "DELETE"), DeleteRateMediaHandlerAsync},
                 { ("/likeRating", "POST"), LikeCommentHandlerAsync},
-
+                // Favorite endpoints
+                {  ("/favoriteMedia", "POST"), FavoriteMediaHandlerAsync },
+                { ("/favoriteMedia", "GET"), ReadFavoriteMediaHandlerAsync},
+                { ("/favoriteMedia", "DELETE"), UnfavoriteMediaHandlerAsync},
                 // User endpoints
                  { ("/getUserById", "GET"), GetUserByIdHandlerAsync},
                  { ("/getUserByUsername", "GET"), GetUserByUsernameHandlerAsync}
@@ -333,6 +337,40 @@ namespace MediaRatingPlatform_Server
             WriteResponse(context.Response, "Successfull", "text/plain");
 
         }
+
+
+        /*--------------------------------- Media Favorite Handlers ---------------------------------
+         ------------------------------------------------------------------------------------*/
+
+        private async Task FavoriteMediaHandlerAsync(HttpListenerContext context)
+        {
+            int userId = await UserAuthorizationAsync(context);
+            using StreamReader stream = new StreamReader(context.Request.InputStream);
+            string body = await stream.ReadToEndAsync();
+            int mediaId = int.Parse(context.Request.QueryString.Get("mediaId"));
+            await _mediaService.FavoriteMediaAsync(mediaId, userId);
+            WriteResponse(context.Response, "Successfull", "text/plain");
+        }
+
+        private async Task ReadFavoriteMediaHandlerAsync(HttpListenerContext context)
+        {
+            await _mediaService.ReadAllFavoriteMediaAsync();
+            WriteResponse(context.Response, "Read Media Favorites Successfull", "application/json");
+        }
+
+        private async Task UnfavoriteMediaHandlerAsync(HttpListenerContext context)
+        {
+            int userId = await UserAuthorizationAsync(context);
+            using StreamReader stream = new StreamReader(context.Request.InputStream);
+            string body = await stream.ReadToEndAsync();
+            int mediaId = int.Parse(context.Request.QueryString.Get("mediaId"));
+            await _mediaService.UnfavoriteMediaAsync(mediaId, userId);
+            WriteResponse(context.Response, "Successfull", "text/plain");
+        }
+
+
+
+
 
         /*--------------------------------- User Handlers ---------------------------------
          ------------------------------------------------------------------------------------*/

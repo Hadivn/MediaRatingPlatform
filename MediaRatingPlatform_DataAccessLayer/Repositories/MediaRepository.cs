@@ -248,6 +248,52 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
         }
 
 
+        // CRUD - Media Favorite 
+
+        public async Task FavoriteMediaAsync(MediaFavoriteEntity mediaFavoriteEntity)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var cmd = new NpgsqlCommand(@"
+                INSERT INTO favorites (media_id, user_id, created_at)
+                VALUES (@mediaId, @userId, @createdAt);", connection);
+            cmd.Parameters.AddWithValue("@mediaId", mediaFavoriteEntity.mediaId);
+            cmd.Parameters.AddWithValue("@userId", mediaFavoriteEntity.userId);
+            cmd.Parameters.AddWithValue("@createdAt", mediaFavoriteEntity.createdAt);
+            await cmd.ExecuteNonQueryAsync();
+
+        }
+
+        public async Task ReadAllMediaFavoritesAsync()
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var cmd = new NpgsqlCommand("SELECT * FROM favorites", connection);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                Console.WriteLine($"MediaId: {reader["media_id"]}");
+                Console.WriteLine($"UserId: {reader["user_id"]}");
+                Console.WriteLine($"CreatedAt: {reader["created_at"]}");
+                Console.WriteLine("----------------------------------------");
+            }
+           
+        }
+
+        public async Task UnfavoriteMediaAsync(int mediaId, int userId)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var deleteCmd = new NpgsqlCommand("DELETE FROM favorites WHERE media_id = @mediaId AND user_id = @userId", connection);
+            deleteCmd.Parameters.AddWithValue("mediaId", mediaId);
+            deleteCmd.Parameters.AddWithValue("userId", userId);
+            await deleteCmd.ExecuteNonQueryAsync();
+        }
+
+
+
+
+
         // hilfsmethoden
         public async Task<bool> MediaExists(string title)
         {

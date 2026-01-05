@@ -93,6 +93,15 @@ namespace MediaRatingPlatform_DataAccessLayer
             )", _connection);
             await createLikeTableCmd.ExecuteNonQueryAsync();
 
+            var createFavoriteTableCmd = new NpgsqlCommand(
+                @"CREATE TABLE IF NOT EXISTS favorites (
+                    media_id INT NOT NULL REFERENCES media(id) ON DELETE CASCADE,
+                    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    
+                    Primary Key (media_id, user_id)
+                )", _connection);
+            await createFavoriteTableCmd.ExecuteNonQueryAsync();
 
         }
 

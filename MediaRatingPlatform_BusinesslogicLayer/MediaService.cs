@@ -256,6 +256,61 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             }
         }
 
+
+        // --------------------------------- Media Favorite --------------------------------
+
+        public async Task FavoriteMediaAsync(int mediaId, int userId)
+        {
+            MediaFavoriteEntity mediaFavoriteEntity = new MediaFavoriteEntity(mediaId, userId);
+            try
+            {
+                await _mediaRepository.FavoriteMediaAsync(mediaFavoriteEntity);
+                Console.WriteLine($"Favoriting Media {mediaId} successfull");
+            }
+            catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "23505")
+            {
+                Console.WriteLine("------------------ FAVORITING MEDIA FAILED ------------------");
+                Console.WriteLine($"Favoriting Media {mediaId} failed: *Media already favorited by this user.*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("------------------ FAVORITING MEDIA FAILED ------------------");
+                Console.WriteLine($"Favoriting Media {mediaId} failed: *{ex.Message}*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+            }
+        }
+
+        public async Task ReadAllFavoriteMediaAsync()
+        {
+            await _mediaRepository.ReadAllMediaFavoritesAsync();
+        }
+
+        public async Task UnfavoriteMediaAsync(int mediaId, int userId)
+        {
+            try
+            {
+                await _mediaRepository.UnfavoriteMediaAsync(mediaId, userId);
+                Console.WriteLine($"Deleting Favorite Media {mediaId} successfull");
+            }
+            catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "P0001")
+            {
+                Console.WriteLine("------------------ DELETING FAVORITE MEDIA FAILED ------------------");
+                Console.WriteLine($"Deleting Favorite Media {mediaId} failed: *Favorite does not exist.*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("------------------ DELETING FAVORITE MEDIA FAILED ------------------");
+                Console.WriteLine($"Deleting Favorite Media {mediaId} failed: *{ex.Message}*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+            }
+        }
+
         public async Task<int> GetMediaId(string title)
         {
             return await _mediaRepository.GetMediaIdByTitle(title);
