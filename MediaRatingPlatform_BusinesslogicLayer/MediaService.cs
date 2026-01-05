@@ -26,7 +26,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         {
 
             // ENUM, from int to MediaType
-            EMediaType eMediaType = (EMediaType) mediaDTO.mediaType;
+            EMediaType eMediaType = (EMediaType)mediaDTO.mediaType;
             MediaEntity mediaEntity = new MediaEntity(mediaDTO.title, mediaDTO.description, eMediaType,
                 mediaDTO.releaseYear, mediaDTO.genres, mediaDTO.ageRestriction, userId);
 
@@ -49,7 +49,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine($"updated at = {mediaEntity.updatedAt}");
                 Console.WriteLine($"genres = {mediaEntity.genres}");
                 Console.WriteLine($"userId = {userId}");
-                
+
                 Console.WriteLine($"Creating Media {mediaEntity.title} failed: *{ex.Message}*");
                 Console.WriteLine("------------------------------------------------------------");
             }
@@ -67,7 +67,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         public async Task UpdateMediaAsync(MediaUpdateDTO mediaUpdateDTO, string title, int userid)
         {
             int createdByUserId = await _mediaRepository.GetCreatedByUserId(title);
-            if(createdByUserId != userid)
+            if (createdByUserId != userid)
             {
                 Console.WriteLine("Not allowed because of wrong userId\n----------------------------------");
                 return;
@@ -99,7 +99,8 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             {
                 await _mediaRepository.DeleteMediaByTitle(title);
                 Console.WriteLine($"Deleting Media {title} successfull");
-            } catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "P0001")
+            }
+            catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "P0001")
             {
                 Console.WriteLine("------------------ MEDIA DELETION FAILED ------------------");
                 Console.WriteLine($"Deleting Media {title} failed: *Media does not exist.*");
@@ -118,7 +119,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         // --------------------------------- Media Rating --------------------------------
         public async Task RateMediaAsync(MediaRatingDTO mediaRatingDTO, string title, int userId)
         {
-        
+
             int mediaId = await _mediaRepository.GetMediaIdByTitle(title);
             MediaRatingEntity mediaRatingEntity = new MediaRatingEntity(mediaRatingDTO.star, mediaRatingDTO.comment, userId, mediaId, mediaRatingDTO.isConfirmed);
 
@@ -212,7 +213,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine("Exception in BusinessLogic-Layer");
                 Console.WriteLine("------------------------------------------------------------");
             }
-            
+
 
 
         }
@@ -311,10 +312,12 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             }
         }
 
-        public async Task<int> GetMediaId(string title)
-        {
-            return await _mediaRepository.GetMediaIdByTitle(title);
-        }
+        // --------------------------------- Personal Stats --------------------------------
 
+        public async Task GetPersonalStatsAsync(int userId)
+        {
+            await _mediaRepository.GetPersonalStatsAsync(userId);
+
+        }
     }
 }
