@@ -329,5 +329,10 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         {
             await _mediaRepository.GetRatingHistoryAsync(userId);
         }
+
+        public async Task GetLeaderboardAsync()
+        {
+            await _mediaRepository.GetLeaderboardAsync();
+        }
     }
 }

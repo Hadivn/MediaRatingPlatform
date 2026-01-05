@@ -58,6 +58,7 @@ namespace MediaRatingPlatform_Server
                 {  ("/personalStats", "GET"), PersonalStatsHandlerAsync },
                 {  ("/mediaStats", "GET"), MediaStatsHandlerAsync },
                 {  ("/ratingHistory", "GET"), RatingHistoryHandlerAsync },
+                {  ("/leaderboard", "GET"), LeaderboardHandlerAsync  },
                 // User endpoints
                  { ("/getUserById", "GET"), GetUserByIdHandlerAsync},
                  { ("/getUserByUsername", "GET"), GetUserByUsernameHandlerAsync}
@@ -404,6 +405,11 @@ namespace MediaRatingPlatform_Server
             WriteResponse(context.Response, "Read Rating History Successfull", "application/json");
         }
 
+        private async Task LeaderboardHandlerAsync(HttpListenerContext context)
+        {
+            await _mediaService.GetLeaderboardAsync();
+            WriteResponse(context.Response, "Read Leaderboard Successfull", "application/json");
+        }
 
         /*--------------------------------- User Handlers ---------------------------------
          ------------------------------------------------------------------------------------*/

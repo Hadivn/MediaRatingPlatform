@@ -304,7 +304,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
         }
 
 
-        // Personal statistics methods
+        // -------------------------------- Personal statistics methods ----------------------------
 
         public async Task GetPersonalStatsAsync(int id)
         {
@@ -390,12 +390,30 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             }
         }
 
+        public async Task GetLeaderboardAsync()
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            NpgsqlCommand cmd = new NpgsqlCommand(
+                "SELECT user_id, count(id) as rating_count from ratings " +
+                "GROUP BY user_id order by count(id) DESC" 
+                , connection);
+            using var reader = await cmd.ExecuteReaderAsync();
+            Console.WriteLine("-------------------- Leaderboard --------------------------");
+            while (await reader.ReadAsync())
+            {
+                int userId = reader.GetInt32(0);
+                long ratingCount = reader.GetInt64(1);
+                Console.WriteLine($"UserId: {userId} - Ratings given: {ratingCount}");
+            }
+        }
 
 
 
 
 
-        // hilfsmethoden
+
+        //----------------------------------- hilfsmethoden ---------------------------------
         public async Task<bool> MediaExists(string title)
         {
             using var connection = new NpgsqlConnection(_connectionString);
