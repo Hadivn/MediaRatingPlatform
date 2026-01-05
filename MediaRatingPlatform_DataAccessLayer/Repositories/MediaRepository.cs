@@ -173,6 +173,54 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             await cmd.ExecuteNonQueryAsync();
         }
 
+        public async Task ReadAllMediaRatingsAsync()
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var cmd = new NpgsqlCommand("SELECT * FROM ratings", connection);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                Console.WriteLine($"Id: {reader["id"]}");
+                Console.WriteLine($"Star: {reader["star"]}");
+                Console.WriteLine($"Comment: {reader["comment"]}");
+                Console.WriteLine($"CreatedAt: {reader["created_at"]}");
+                Console.WriteLine($"UserId: {reader["user_id"]}");
+                Console.WriteLine($"MediaId: {reader["media_id"]}");
+                Console.WriteLine($"IsConfirmed: {reader["is_confirmed"]}");
+                Console.WriteLine("----------------------------------------");
+            }
+        }
+
+        public async Task UpdateMediaRatingAsync(MediaRatingUpdateDTO mediaRatingUpdateDTO, int ratingId)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var updateFields = new List<string>();
+            using var updateCmd = connection.CreateCommand();
+            if (mediaRatingUpdateDTO.star != null)
+            {
+                updateFields.Add("star = @star");
+                updateCmd.Parameters.AddWithValue("star", mediaRatingUpdateDTO.star);
+            }
+            if (!string.IsNullOrEmpty(mediaRatingUpdateDTO.comment))
+            {
+                updateFields.Add("comment = @comment");
+                updateCmd.Parameters.Add("comment", NpgsqlDbType.Text)
+                                    .Value = mediaRatingUpdateDTO.comment;
+            }
+            if (mediaRatingUpdateDTO.isConfirmed != null)
+            {
+                updateFields.Add("is_confirmed = @isConfirmed");
+                updateCmd.Parameters.AddWithValue("isConfirmed", mediaRatingUpdateDTO.isConfirmed);
+            }
+            if (updateFields.Count == 0)
+                return; // nothing to update
+            updateCmd.CommandText = $"UPDATE ratings SET {String.Join(',', updateFields)} where id = @id";
+            updateCmd.Parameters.AddWithValue("id", ratingId);
+            await updateCmd.ExecuteNonQueryAsync();
+        }
+
         public async Task LikeRatingAsync(LikeRatingEntity likeRatingEntity)
         {
             using var connection = new NpgsqlConnection(_connectionString);

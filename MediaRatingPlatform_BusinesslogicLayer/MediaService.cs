@@ -150,6 +150,34 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             }
 
         }
+
+        public async Task ReadAllMediaRatingsAsync()
+        {
+            await _mediaRepository.ReadAllMediaRatingsAsync();
+        }
+
+        public async Task UpdateMediaRatingAsync(MediaRatingUpdateDTO mediaRatingUpdateDTO, int ratingId, int userId)
+        {
+            int createdByUserId = await _mediaRepository.GetUserIdByRatingId(ratingId);
+            if (createdByUserId != userId)
+            {
+                Console.WriteLine("Not allowed because of wrong userId\n----------------------------------");
+                return;
+            }
+            try
+            {
+                await _mediaRepository.UpdateMediaRatingAsync(mediaRatingUpdateDTO, ratingId);
+                Console.WriteLine($"Updating Media Rating {ratingId} successfull");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("------------------ UPDATING MEDIA RATING FAILED ------------------");
+                Console.WriteLine($"Updating Media Rating {ratingId} failed: *{ex.Message}*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+            }
+        }
+
         public async Task LikeRatingAsync(LikeRatingDTO likeRatingDTO, int userId)
         {
             if (!await _mediaRepository.IsRatingPublic(likeRatingDTO.ratingId))

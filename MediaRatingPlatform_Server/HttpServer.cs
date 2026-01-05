@@ -45,7 +45,8 @@ namespace MediaRatingPlatform_Server
                 { ("/Media", "DELETE"), DeleteMediaHandlerAsync},
                 // Media endpoints
                 { ("/rateMedia", "POST"), RateMediaHandlerAsync},
-                // update { ("/rateMedia", "POST"), RateMediaHandlerAsync},
+                { ("/rateMedia", "GET"), ReadAllRateMediaHandlerAsync},
+                { ("/rateMedia", "PUT"), UpdateRateMediaHandlerAsync},
                 { ("/rateMedia", "DELETE"), DeleteRateMediaHandlerAsync},
                 { ("/likeRating", "POST"), LikeCommentHandlerAsync},
 
@@ -280,6 +281,28 @@ namespace MediaRatingPlatform_Server
             await _mediaService.RateMediaAsync(mediaRatingDTO, title, userId);
             WriteResponse(context.Response, "Successfull", "text/plain");
 
+        }
+
+        public async Task ReadAllRateMediaHandlerAsync(HttpListenerContext context)
+        {
+            //   int userId = await UserAuthorizationAsync(context);
+            await UserAuthorizationAsync(context);
+            await _mediaService.ReadAllMediaRatingsAsync();
+            WriteResponse(context.Response, "Read Media Ratings Successfull", "text/plain");
+        }
+
+        private async Task UpdateRateMediaHandlerAsync(HttpListenerContext context)
+        {
+            int userId = await UserAuthorizationAsync(context);
+            StreamReader stream = new StreamReader(context.Request.InputStream);
+            string body = await stream.ReadToEndAsync();
+            // stream beenden
+            stream.Dispose();
+            MediaRatingUpdateDTO mediaRatingUpdateDTO = JsonSerializer.Deserialize<MediaRatingUpdateDTO>(body);
+            int ratingId = int.Parse(context.Request.QueryString.Get("ratingId"));
+            Console.WriteLine("ratingId: " + ratingId);
+            await _mediaService.UpdateMediaRatingAsync(mediaRatingUpdateDTO, ratingId, userId);
+            WriteResponse(context.Response, "Successfull", "text/plain");
         }
 
         private async Task DeleteRateMediaHandlerAsync(HttpListenerContext context)
