@@ -59,6 +59,7 @@ namespace MediaRatingPlatform_Server
                 {  ("/mediaStats", "GET"), MediaStatsHandlerAsync },
                 {  ("/ratingHistory", "GET"), RatingHistoryHandlerAsync },
                 {  ("/leaderboard", "GET"), LeaderboardHandlerAsync  },
+                {  ("/filter", "GET"), FilterMediaHandlerAsync },
                 // User endpoints
                  { ("/getUserById", "GET"), GetUserByIdHandlerAsync},
                  { ("/getUserByUsername", "GET"), GetUserByUsernameHandlerAsync},
@@ -458,7 +459,7 @@ namespace MediaRatingPlatform_Server
             WriteResponse(context.Response, json, "application/json");
         }
 
-        /*--------------------------------- User Handlers ---------------------------------
+        /*--------------------------------- Search + Filter ---------------------------------
          ------------------------------------------------------------------------------------*/
 
         private async Task SearchMediaHandlerAsync(HttpListenerContext context)
@@ -467,6 +468,25 @@ namespace MediaRatingPlatform_Server
             string media = await _mediaService.SearchMediaAsync(title);
             string json = JsonSerializer.Serialize(media);
             WriteResponse(context.Response, json, "application/json");
+        }
+
+        private async Task FilterMediaHandlerAsync(HttpListenerContext context)
+        {
+            await UserAuthorizationAsync(context);
+            var filter = context.Request.QueryString;
+            // muss joinen, brauche star
+            string? genre = filter.Get("genre");
+            string? type = filter.Get("media_type");
+            int? releaseYear = int.TryParse(filter.Get("release_year"), out var release) ? release : null;
+            int? ageRestriction = int.TryParse(filter.Get("age_restriction"), out var age) ? age : null;
+            int? star = int.TryParse(filter.Get("star"), out var output) ? output : null;
+
+            string? sortBy = filter.Get("sort"); // kann title, release_year, star sein
+            Console.WriteLine(genre);
+
+            await _mediaService.FilterMediaAsync(genre, type, releaseYear, ageRestriction, star, sortBy);
+            WriteResponse(context.Response, "Filter Media Successfull", "application/json");
+
         }
 
 

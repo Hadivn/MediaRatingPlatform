@@ -336,13 +336,22 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         }
 
 
-        // --------------------------------- Search --------------------------------
+        // --------------------------------- Search + Filter --------------------------------
 
         public async Task<string> SearchMediaAsync(string title)
         {
-           return await _mediaRepository.SearchMediaAsync(title);
+            return await _mediaRepository.SearchMediaAsync(title);
 
+        }
 
+        public async Task FilterMediaAsync(string? genre, string? type, int? releaseYear, int? ageRestriction, int? star, string? sortBy)
+        {
+            if(sortBy is null)
+            {
+                sortBy = "title";
+            }
+
+            await _mediaRepository.FilterMediaAsync(genre, type, releaseYear, ageRestriction, star, sortBy);
         }
     }
 }

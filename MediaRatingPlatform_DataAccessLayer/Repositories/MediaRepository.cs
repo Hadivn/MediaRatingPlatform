@@ -12,6 +12,8 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 {
     public class MediaRepository
     {
+        // ExecuteNonQueryAsync für Insert, Update, Delete
+        // ExecuteReaderAsync für Select
         private string _connectionString = "Host=192.168.0.53;Port=5432;Username=mrpdatabase;Password=user;Database=mrpdatabase";
 
         // CRUD - Media create
@@ -409,7 +411,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
         }
 
 
-        // --------------------------------- Search --------------------------------
+        // --------------------------------- Search + Filter --------------------------------
 
         public async Task<string> SearchMediaAsync(string title)
         {
@@ -433,6 +435,79 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 
            
             return "no title has been found!";
+        }
+
+        public async Task FilterMediaAsync(string? genre, string? type, int? releaseYear, int? ageRestriction, int? star, string? sortBy)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var filterConditions = new List<string>();
+            string sortCondition = "";
+            using var cmd = connection.CreateCommand();
+            if (genre != null)
+            {
+                filterConditions.Add("m.genres = @genre");
+                cmd.Parameters.AddWithValue("genre", genre);
+            }
+            if (type != null)
+            {
+                filterConditions.Add("m.media_type = @type");
+                cmd.Parameters.AddWithValue("type", type);
+            }
+            if (releaseYear != null)
+            {
+                filterConditions.Add("m.release_year = @releaseYear");
+                cmd.Parameters.AddWithValue("releaseYear", releaseYear);
+            }
+            if (ageRestriction != null)
+            {
+                filterConditions.Add("m.age_restriction <= @ageRestriction");
+                cmd.Parameters.AddWithValue("ageRestriction", ageRestriction);
+            }
+            if (star != null)
+            {
+                filterConditions.Add("r.star >= @star");
+                cmd.Parameters.AddWithValue("star", star);
+            }
+            if (sortBy != null)
+            {
+                if (sortBy.Equals("title"))
+                {
+                    sortCondition ="ORDER BY title";
+                }
+                else if (sortBy.Equals("release_year"))
+                {
+                    sortCondition = "ORDER BY release_year DESC";
+                }
+                else if (sortBy.Equals("star"))
+                {
+                    sortCondition = "ORDER BY star DESC";
+                }
+            }
+
+
+            if (filterConditions.Count == 0)
+                return; // nothing to update
+            cmd.CommandText = $"Select m.id, m.title, m.media_type, m.genres, m.release_year, m.age_restriction, ROUND(AVG(r.star), 2) as avg, Count(r.id) as count from media m " +
+                "LEFT JOIN ratings r ON m.id = r.media_id " +
+                $"where {String.Join(" AND ", filterConditions)} " +
+                "GROUP BY m.id " +
+                $"{sortCondition}";
+            using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                Console.WriteLine("----------------------------------------");
+                Console.WriteLine($"Id: {reader["id"]}");
+                Console.WriteLine($"Title: {reader["title"]}");
+                Console.WriteLine($"mediaType: {reader["media_type"]}");
+                Console.WriteLine($"genres: {reader["genres"]}");
+                Console.WriteLine($"releaseYear: {reader["release_year"]}");
+                Console.WriteLine($"ageRestriction: {reader["age_restriction"]}");
+                Console.WriteLine($"Average Star: {reader["avg"]}");
+                Console.WriteLine($"Total Ratings: {reader["count"]}");
+                Console.WriteLine("----------------------------------------");
+            }
+
         }
 
 
