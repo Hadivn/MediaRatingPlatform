@@ -11,14 +11,6 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
         // CRUD - User create
         public async Task CreateUser(UserEntity userEntity)
         {
-           
-
-            // check if users exists already
-            if (await GetByUsernameAsync(userEntity.username))
-            {
-                throw new Exception("Username existiert bereits!");
-            }
-
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
 
@@ -129,8 +121,17 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
             };
         }
 
-     
-       
+        public async Task<bool> DoesUserExist(string username)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var userExistsCmd = new NpgsqlCommand("SELECT COUNT(*) FROM users WHERE username = @u", connection);
+            userExistsCmd.Parameters.AddWithValue("u", username);
+            var count = (long)await userExistsCmd.ExecuteScalarAsync();
+            return count > 0;
+
+
+        }
 
 
        

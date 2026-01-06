@@ -122,11 +122,12 @@ namespace MediaRatingPlatform_Server
         public void Close() { _listener.Close(); }
 
         // should include response code as 4th argument??
-        private void WriteResponse(HttpListenerResponse response, string text, string contentType = "text/plain")
+        private void WriteResponse(HttpListenerResponse response, string text, string contentType = "text/plain", int stautsCode = 200)
         {
             byte[] buffer = Encoding.UTF8.GetBytes(text);
             response.ContentType = contentType;
             response.ContentLength64 = buffer.Length;
+            response.StatusCode = stautsCode;
             response.OutputStream.Write(buffer, 0, buffer.Length);
             response.OutputStream.Close();
 
@@ -138,26 +139,39 @@ namespace MediaRatingPlatform_Server
          ------------------------------------------------------------------------------------*/
         private async Task RegisterHandlerAsync(HttpListenerContext context)
         {
-            /*
-            Console.WriteLine("Raw Url: " + context.Request.RawUrl);
-            Console.WriteLine("UserHostName: " + context.Request.UserHostName);
-            Console.WriteLine("Headers: " + context.Request.Headers);
-            */
 
-            // hier weiter, System.IO.Stream+NullStream fehlermeldung ---> Body von Anfrage einlesen.
-            // dann user registrieren sowie excistence checks
-            StreamReader stream = new StreamReader(context.Request.InputStream);
-            string body = await stream.ReadToEndAsync();
-            // stream beenden
-            stream.Dispose();
-            UserRegisterDTO userRegisterDTO = JsonSerializer.Deserialize<UserRegisterDTO>(body);
-            Console.WriteLine("------------------ USER REGISTER INFO ------------------");
-            Console.WriteLine("User register: " + body);
-            Console.WriteLine("User Register DTO username: " + userRegisterDTO.username);
-            Console.WriteLine("User Register DTO password: " + userRegisterDTO.password);
-            Console.WriteLine("-----------------------------------------------------");
-            WriteResponse(context.Response, "RegisterHandler", "text/plain");
-            await _userService.RegisterUserAsync(userRegisterDTO);
+            using StreamReader stream = new StreamReader(context.Request.InputStream);
+            string body = await stream.ReadToEndAsync();           
+            try
+            {
+                UserRegisterDTO userRegisterDTO = JsonSerializer.Deserialize<UserRegisterDTO>(body);
+                if (userRegisterDTO == null)
+                {
+                    WriteResponse(context.Response, "userRegister DTO ist null", "text/plain", 400);
+                    return;
+                }
+                //Console.WriteLine("------------------ USER REGISTER INFO ------------------");
+                //Console.WriteLine("User register: " + body);
+                //Console.WriteLine("User Register DTO username: " + userRegisterDTO.username);
+                //Console.WriteLine("User Register DTO password: " + userRegisterDTO.password);
+                //Console.WriteLine("-----------------------------------------------------");
+                await _userService.RegisterUserAsync(userRegisterDTO);
+                WriteResponse(context.Response, "User regestriert", "text/plain", 201);
+            }
+            catch (ArgumentException)
+            {
+                WriteResponse(context.Response, "No Password or Username given!", "text/plain", 400);
+                return;
+            } catch (UnauthorizedAccessException)
+            {
+                WriteResponse(context.Response, "Username already exists", "text/plain", 409);
+                return;
+            }
+            catch (Exception)
+            {
+                WriteResponse(context.Response, "Error registering user", "text/plain", 500);
+                return;
+            }
 
         }
 
@@ -223,7 +237,7 @@ namespace MediaRatingPlatform_Server
             await UserAuthorizationAsync(context);
 
             await _mediaService.ReadAllMediaAsync();
-            WriteResponse(context.Response, "Read Media Successfull", "text/plain");
+            WriteResponse(context.Response, "Read Media Successfull", "text/plain", 200);
         }
 
         // Update Media

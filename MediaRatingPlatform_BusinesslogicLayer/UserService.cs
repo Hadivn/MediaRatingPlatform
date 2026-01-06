@@ -22,7 +22,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         }
 
         // Register + Create User
-        public async Task RegisterUserAsync(UserRegisterDTO userRegisterDTO)
+        public async Task<UserEntity> RegisterUserAsync(UserRegisterDTO userRegisterDTO)
         {
             // map DTO into entity
             if (string.IsNullOrWhiteSpace(userRegisterDTO.username) || string.IsNullOrEmpty(userRegisterDTO.password))
@@ -30,21 +30,18 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 throw new ArgumentException("No Username or Password given!");
             }
 
+            if (await UserExistsAsync(userRegisterDTO.username))
+            {
+                throw new UnauthorizedAccessException("Username existiert bereits!");
+            }
+
             UserEntity userEntity = new UserEntity(userRegisterDTO.username, userRegisterDTO.password);
 
-            try
-            {
-                await _userRepository.CreateUser(userEntity);
-                Console.WriteLine("Creating user successfull");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("------------------ USER CREATION FAILED ------------------");
-                Console.WriteLine($"Creating a user failed: *{ex.Message}*");
-                Console.WriteLine("----------------------------------------------------------");
-            }
+            await _userRepository.CreateUser(userEntity);
 
-
+            return userEntity;
+       
+       
         }
 
 
@@ -87,6 +84,11 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         public async Task<UserEntity> GetUserByUsernameAsync(string username)
         {
             return await _userRepository.GetUserByUsernameAsync(username);
+        }
+
+        public async Task<bool> UserExistsAsync(string username)
+        {
+            return await _userRepository.DoesUserExist(username);
         }
 
 
