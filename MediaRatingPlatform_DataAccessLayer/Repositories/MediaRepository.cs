@@ -2,11 +2,6 @@
 using MediaRatingPlatform_Domain.Entities;
 using Npgsql;
 using NpgsqlTypes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MediaRatingPlatform_DataAccessLayer.Repositories
 {
@@ -34,7 +29,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 
             cmd.Parameters.AddWithValue("@title", mediaEntity.title);
             cmd.Parameters.AddWithValue("@description", mediaEntity.description);
-            cmd.Parameters.AddWithValue("@mediaType", mediaEntity.mediaType.ToString()); 
+            cmd.Parameters.AddWithValue("@mediaType", mediaEntity.mediaType.ToString());
             cmd.Parameters.AddWithValue("@genres", mediaEntity.genres);
             cmd.Parameters.AddWithValue("@releaseYear", mediaEntity.releaseYear);
             cmd.Parameters.AddWithValue("@ageRestriction", mediaEntity.ageRestriction);
@@ -68,7 +63,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                 Console.WriteLine("----------------------------------------");
             }
 
-            
+
         }
 
         // CRUD - Media update
@@ -151,7 +146,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                     $"exception Layer: DataAccessLayer " +
                     $"exception: {ex.Message}" +
                     "-------------------------------------------------------");
-               
+
             }
 
         }
@@ -194,7 +189,8 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                     Console.WriteLine($"IsConfirmed: {reader["is_confirmed"]}");
                     Console.WriteLine($"Comment: {reader["comment"]}");
                 }
-                else {
+                else
+                {
                     Console.WriteLine($"IsConfirmed : {reader["is_confirmed"]}");
                 }
                 Console.WriteLine($"CreatedAt: {reader["created_at"]}");
@@ -203,7 +199,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                 Console.WriteLine("----------------------------------------");
             }
 
-       
+
         }
 
         public async Task UpdateMediaRatingAsync(MediaRatingUpdateDTO mediaRatingUpdateDTO, int ratingId)
@@ -292,7 +288,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                 Console.WriteLine($"CreatedAt: {reader["created_at"]}");
                 Console.WriteLine("----------------------------------------");
             }
-           
+
         }
 
         public async Task UnfavoriteMediaAsync(int mediaId, int userId)
@@ -373,7 +369,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                 bool isConfirmed = reader.GetBoolean(4);
                 int userIdRead = reader.GetInt32(5);
                 int mediaId = reader.GetInt32(6);
-                
+
                 Console.WriteLine($"Id: {id}");
                 Console.WriteLine($"Star: {star}");
                 if (reader["is_confirmed"].Equals(true))
@@ -398,7 +394,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             await connection.OpenAsync();
             NpgsqlCommand cmd = new NpgsqlCommand(
                 "SELECT user_id, count(id) as rating_count from ratings " +
-                "GROUP BY user_id order by count(id) DESC" 
+                "GROUP BY user_id order by count(id) DESC"
                 , connection);
             using var reader = await cmd.ExecuteReaderAsync();
             Console.WriteLine("-------------------- Leaderboard --------------------------");
@@ -418,7 +414,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
 
-            for(int i = title.Length; i >= 3; i--)
+            for (int i = title.Length; i >= 3; i--)
             {
                 string subTitle = title.Substring(0, i);
                 NpgsqlCommand cmdTest = new NpgsqlCommand("SELECT title FROM media WHERE title ILIKE @title", connection);
@@ -429,11 +425,11 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                     Console.WriteLine($"Found matching title: {readerTest["title"]}");
                     return readerTest["title"].ToString();
                 }
-               
-                
+
+
             }
 
-           
+
             return "no title has been found!";
         }
 
@@ -473,7 +469,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             {
                 if (sortBy.Equals("title"))
                 {
-                    sortCondition ="ORDER BY title";
+                    sortCondition = "ORDER BY title";
                 }
                 else if (sortBy.Equals("release_year"))
                 {
@@ -505,6 +501,58 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                 Console.WriteLine($"ageRestriction: {reader["age_restriction"]}");
                 Console.WriteLine($"Average Star: {reader["avg"]}");
                 Console.WriteLine($"Total Ratings: {reader["count"]}");
+                Console.WriteLine("----------------------------------------");
+            }
+
+        }
+
+        public async Task GetRecommendationAsync(int userId, string? genres, string? type, int? ageRestriction)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var recommendationConditions = new List<string>();
+            using var cmd = connection.CreateCommand();
+
+            if (genres != null)
+            {
+                recommendationConditions.Add("m.genres = @genres");
+                cmd.Parameters.AddWithValue("genres", genres);
+            }
+            if (type != null)
+            {
+                recommendationConditions.Add("m.media_type = @type");
+                cmd.Parameters.AddWithValue("type", type);
+            }
+            if (ageRestriction != null)
+            {
+                recommendationConditions.Add("m.age_restriction <= @ageRestriction");
+                cmd.Parameters.AddWithValue("ageRestriction", ageRestriction);
+            }
+            recommendationConditions.Add("m.user_id != @userId");
+            cmd.Parameters.AddWithValue("userId", userId);
+            if (recommendationConditions.Count == 0)
+                return;
+
+            cmd.CommandText = $"Select m.id, m.title, m.media_type, m.genres, m.release_year, m.age_restriction," +
+                $" ROUND(AVG(r.star), 2) as avg from media m " +
+                  "LEFT JOIN ratings r ON m.id = r.media_id " +
+                  $"where {String.Join(" AND ", recommendationConditions)} " +
+                  $"group by m.id " +
+                  $"having ROUND(AVG(r.star), 2) >= 4";
+            
+
+
+            using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                Console.WriteLine("------------ Recommendation --------------");
+                Console.WriteLine($"Id: {reader["id"]}");
+                Console.WriteLine($"Title: {reader["title"]}");
+                Console.WriteLine($"mediaType: {reader["media_type"]}");
+                Console.WriteLine($"genres: {reader["genres"]}");
+                Console.WriteLine($"releaseYear: {reader["release_year"]}");
+                Console.WriteLine($"ageRestriction: {reader["age_restriction"]}");
+                Console.WriteLine($"star: {reader["avg"]}");
                 Console.WriteLine("----------------------------------------");
             }
 

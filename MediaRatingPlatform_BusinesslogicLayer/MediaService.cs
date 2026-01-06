@@ -353,5 +353,12 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 
             await _mediaRepository.FilterMediaAsync(genre, type, releaseYear, ageRestriction, star, sortBy);
         }
+
+        public async Task GetRecommendationAsync(int userId, string? genres, string? type, int? ageRestriction)
+        {
+
+            await _mediaRepository.GetRecommendationAsync(userId, genres, type, ageRestriction);
+
+        }
     }
 }

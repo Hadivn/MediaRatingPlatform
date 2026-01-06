@@ -60,6 +60,7 @@ namespace MediaRatingPlatform_Server
                 {  ("/ratingHistory", "GET"), RatingHistoryHandlerAsync },
                 {  ("/leaderboard", "GET"), LeaderboardHandlerAsync  },
                 {  ("/filter", "GET"), FilterMediaHandlerAsync },
+                {  ("/recommendation", "GET"), RecommendationHandlerAsync },
                 // User endpoints
                  { ("/getUserById", "GET"), GetUserByIdHandlerAsync},
                  { ("/getUserByUsername", "GET"), GetUserByUsernameHandlerAsync},
@@ -413,51 +414,7 @@ namespace MediaRatingPlatform_Server
             WriteResponse(context.Response, "Read Leaderboard Successfull", "application/json");
         }
 
-        /*--------------------------------- User Handlers ---------------------------------
-         ------------------------------------------------------------------------------------*/
-
-        private async Task GetUserByIdHandlerAsync(HttpListenerContext context)
-        {
-            try
-            {
-                await UserAuthorizationAsync(context);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            
-
-            int userId = Int32.Parse(context.Request.QueryString["id"]);
-
-
-            await _userService.GetUserByIdAsync(userId);
-
-            var user = await _userService.GetUserByIdAsync(userId);
-
-            string json = JsonSerializer.Serialize(user);
-            WriteResponse(context.Response, json, "application/json");
-        }
-
-        private async Task GetUserByUsernameHandlerAsync(HttpListenerContext context)
-        {
-            try
-            {
-                await UserAuthorizationAsync(context);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-
-            string username = context.Request.QueryString.Get("username");
-
-
-            var user = await _userService.GetUserByUsernameAsync(username);
-
-            string json = JsonSerializer.Serialize(user);
-            WriteResponse(context.Response, json, "application/json");
-        }
+      
 
         /*--------------------------------- Search + Filter ---------------------------------
          ------------------------------------------------------------------------------------*/
@@ -489,10 +446,66 @@ namespace MediaRatingPlatform_Server
 
         }
 
+        private async Task RecommendationHandlerAsync(HttpListenerContext context)
+        {
+            int userId = await UserAuthorizationAsync(context);
+
+            var recommendations = context.Request.QueryString;
+
+            string? genres = recommendations.Get("genres");
+            string? type = recommendations.Get("media_type");
+            int? ageRestriction = int.TryParse(recommendations.Get("age_restriction"), out var age) ? age : null;
+
+            await _mediaService.GetRecommendationAsync(userId, genres, type, ageRestriction);
+            WriteResponse(context.Response, "Read Recommendations Successfull", "application/json");
+        }
 
 
-        // Get My User Info
-        // private async Task Get
+        /*--------------------------------- User Handlers ---------------------------------
+       ------------------------------------------------------------------------------------*/
+
+        private async Task GetUserByIdHandlerAsync(HttpListenerContext context)
+        {
+            try
+            {
+                await UserAuthorizationAsync(context);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+
+            int userId = Int32.Parse(context.Request.QueryString["id"]);
+
+
+            await _userService.GetUserByIdAsync(userId);
+
+            var user = await _userService.GetUserByIdAsync(userId);
+
+            string json = JsonSerializer.Serialize(user);
+            WriteResponse(context.Response, json, "application/json");
+        }
+
+        private async Task GetUserByUsernameHandlerAsync(HttpListenerContext context)
+        {
+            try
+            {
+                await UserAuthorizationAsync(context);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            string username = context.Request.QueryString.Get("username");
+
+
+            var user = await _userService.GetUserByUsernameAsync(username);
+
+            string json = JsonSerializer.Serialize(user);
+            WriteResponse(context.Response, json, "application/json");
+        }
 
         private async Task<int> UserAuthorizationAsync(HttpListenerContext context)
         {
