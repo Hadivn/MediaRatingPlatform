@@ -37,6 +37,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories.Interface
         Task<bool> IsRatingPublic(int ratingId);
         Task<int> GetUserIdByRatingId(int ratingId);
         Task<int> GetMediaId(string title);
+        Task<MediaDTO> ReadMediaByTitle(string title);
 
     }
 }

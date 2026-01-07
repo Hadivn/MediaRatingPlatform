@@ -70,6 +70,12 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             await _mediaRepository.ReadAllMediaAsync();
         }
 
+        public async Task<MediaDTO> ReadMediaByTitleAsync(string title)
+        {
+              MediaDTO mediaDTO =  await _mediaRepository.ReadMediaByTitle(title);
+            return mediaDTO;
+        }
+
         // CRUD - Media update
         public async Task UpdateMediaAsync(MediaUpdateDTO mediaUpdateDTO, string title, int userid)
         {

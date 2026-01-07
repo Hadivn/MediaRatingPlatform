@@ -1,6 +1,7 @@
 ﻿using MediaRatingPlatform_DataAccessLayer.Repositories.Interface;
 using MediaRatingPlatform_Domain.DTO;
 using MediaRatingPlatform_Domain.Entities;
+using MediaRatingPlatform_Domain.ENUM;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -64,6 +65,29 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                 Console.WriteLine("----------------------------------------");
             }
 
+
+        }
+
+        public async Task<MediaDTO> ReadMediaByTitle(string title)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            NpgsqlCommand cmd = new NpgsqlCommand("SELECT * FROM media WHERE title = @t", connection);
+            cmd.Parameters.AddWithValue("t", title);
+            MediaDTO mediaDTO = new MediaDTO();
+            using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+
+            while(await reader.ReadAsync())
+            {
+                mediaDTO.title = reader["title"].ToString();
+                mediaDTO.description = reader["description"].ToString();
+                mediaDTO.mediaType = Enum.Parse<EMediaType>(reader["media_type"].ToString()!);
+                mediaDTO.releaseYear = Convert.ToInt32(reader["release_year"]);
+                mediaDTO.ageRestriction = Convert.ToInt32(reader["age_restriction"]);
+                mediaDTO.genres = reader["genres"].ToString();
+            }
+
+            return mediaDTO;
 
         }
 

@@ -47,6 +47,7 @@ namespace MediaRatingPlatform_Server
                 // ich hätte nur einmal /media machen sollen und dann POST, GET, PUT, DELETE
                 { ("/Media", "POST"), CreateMediaHandlerAsync },
                 { ("/Media", "GET"), ReadAllMediaHandlerAsync },
+                { ("/readMedia", "GET"), ReadMediaByTitleHandlerAsync },
                 { ("/Media", "PUT"), UpdateMediaHandlerAsync },
                 { ("/Media", "DELETE"), DeleteMediaHandlerAsync},
                 // Media endpoints
@@ -155,13 +156,10 @@ namespace MediaRatingPlatform_Server
                     WriteResponse(context.Response, "userRegister DTO ist null", "text/plain", 400);
                     return;
                 }
-                //Console.WriteLine("------------------ USER REGISTER INFO ------------------");
-                //Console.WriteLine("User register: " + body);
-                //Console.WriteLine("User Register DTO username: " + userRegisterDTO.username);
-                //Console.WriteLine("User Register DTO password: " + userRegisterDTO.password);
-                //Console.WriteLine("-----------------------------------------------------");
+               
                 await _userService.RegisterUserAsync(userRegisterDTO);
-                WriteResponse(context.Response, "User regestriert", "text/plain", 201);
+                string json = JsonSerializer.Serialize(userRegisterDTO);
+                WriteResponse(context.Response, json, "application/json", 201);
             }
             catch (ArgumentException)
             {
@@ -242,7 +240,17 @@ namespace MediaRatingPlatform_Server
             await UserAuthorizationAsync(context);
 
             await _mediaService.ReadAllMediaAsync();
-            WriteResponse(context.Response, "Read Media Successfull", "text/plain", 200);
+            WriteResponse(context.Response, "Read Media Successfull", "application/json", 200);
+        }
+
+        // Read Media by Title
+        private async Task ReadMediaByTitleHandlerAsync(HttpListenerContext context)
+        {
+            await UserAuthorizationAsync(context);
+            string title = context.Request.QueryString.Get("title");
+            MediaDTO mediaDTO =  await _mediaService.ReadMediaByTitleAsync(title);
+            string json = JsonSerializer.Serialize(mediaDTO);
+            WriteResponse(context.Response, json, "application/json", 200);
         }
 
         // Update Media
@@ -262,7 +270,8 @@ namespace MediaRatingPlatform_Server
             // update body
             MediaUpdateDTO mediaUpdateDTO = JsonSerializer.Deserialize<MediaUpdateDTO>(body);
             await _mediaService.UpdateMediaAsync(mediaUpdateDTO, title, userId);
-            WriteResponse(context.Response, "Successfull", "text/plain");
+            string json = JsonSerializer.Serialize(mediaUpdateDTO);
+            WriteResponse(context.Response, json, "application/json");
         }
 
 
