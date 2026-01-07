@@ -239,8 +239,9 @@ namespace MediaRatingPlatform_Server
             //   int userId = await UserAuthorizationAsync(context);
             await UserAuthorizationAsync(context);
 
-            await _mediaService.ReadAllMediaAsync();
-            WriteResponse(context.Response, "Read Media Successfull", "application/json", 200);
+            List<MediaDTO> mediaList = await _mediaService.ReadAllMediaAsync();
+            string json = JsonSerializer.Serialize(mediaList);
+            WriteResponse(context.Response, json, "application/json", 200);
         }
 
         // Read Media by Title
@@ -298,7 +299,8 @@ namespace MediaRatingPlatform_Server
             }
             Console.WriteLine("-----------------------------------------------------");
             await _mediaService.DeleteMediaByTitleAsync(mediaDTO.title, userId);
-            WriteResponse(context.Response, "Successfull", "text/plain");
+            string json = JsonSerializer.Serialize(mediaDTO);
+            WriteResponse(context.Response, json, "application/json");
         }
 
         /*--------------------------------- Media Rating Handlers ---------------------------------
@@ -319,7 +321,8 @@ namespace MediaRatingPlatform_Server
             Console.WriteLine("\n");
             
             await _mediaService.RateMediaAsync(mediaRatingDTO, title, userId);
-            WriteResponse(context.Response, "Successfull", "text/plain");
+            string json = JsonSerializer.Serialize(mediaRatingDTO);
+            WriteResponse(context.Response, json, "application/json");
 
         }
 
@@ -327,8 +330,9 @@ namespace MediaRatingPlatform_Server
         {
             //   int userId = await UserAuthorizationAsync(context);
             await UserAuthorizationAsync(context);
-            await _mediaService.ReadAllMediaRatingsAsync();
-            WriteResponse(context.Response, "Read Media Ratings Successfull", "text/plain");
+            List<MediaAllRatingsDTO> mediaRatings =  await _mediaService.ReadAllMediaRatingsAsync();
+            string json = JsonSerializer.Serialize(mediaRatings);
+            WriteResponse(context.Response, json, "application/json");
         }
 
         private async Task UpdateRateMediaHandlerAsync(HttpListenerContext context)
@@ -342,7 +346,8 @@ namespace MediaRatingPlatform_Server
             int ratingId = int.Parse(context.Request.QueryString.Get("ratingId"));
             Console.WriteLine("ratingId: " + ratingId);
             await _mediaService.UpdateMediaRatingAsync(mediaRatingUpdateDTO, ratingId, userId);
-            WriteResponse(context.Response, "Successfull", "text/plain");
+            string json = JsonSerializer.Serialize(mediaRatingUpdateDTO);
+            WriteResponse(context.Response, json, "application/json");
         }
 
         private async Task DeleteRateMediaHandlerAsync(HttpListenerContext context)
@@ -355,8 +360,9 @@ namespace MediaRatingPlatform_Server
             Console.WriteLine("ratingId: " + ratingId);
       
 
-            await _mediaService.DeleteRatingAsync(ratingId, userId);
-            WriteResponse(context.Response, "Successfull", "text/plain");
+            MediaDeleteDTO mediaDeleteDTO = await _mediaService.DeleteRatingAsync(ratingId, userId);
+            string json = JsonSerializer.Serialize(mediaDeleteDTO);
+            WriteResponse(context.Response, json, "application/json");
         }
 
         private async Task LikeCommentHandlerAsync(HttpListenerContext context)
@@ -370,7 +376,8 @@ namespace MediaRatingPlatform_Server
             LikeRatingDTO mediaLikeDTO = JsonSerializer.Deserialize<LikeRatingDTO>(body);
 
             await _mediaService.LikeRatingAsync(mediaLikeDTO, userId);
-            WriteResponse(context.Response, "Successfull", "text/plain");
+            string json = JsonSerializer.Serialize(mediaLikeDTO);
+            WriteResponse(context.Response, json, "application/json");
 
         }
 
@@ -391,8 +398,9 @@ namespace MediaRatingPlatform_Server
         private async Task GetFavoritesMediaHandlerAsync(HttpListenerContext context)
         {
             int userId = await UserAuthorizationAsync(context);
-            await _mediaService.GetFavoritesAsync(userId);
-            WriteResponse(context.Response, "Read Media Favorites Successfull", "application/json");
+            MediaFavoriteEntity mediaFavoriteEntity = await _mediaService.GetFavoritesAsync(userId);
+            string json = JsonSerializer.Serialize(mediaFavoriteEntity);
+            WriteResponse(context.Response, json, "application/json");
         }
 
         private async Task UnfavoriteMediaHandlerAsync(HttpListenerContext context)
@@ -414,8 +422,9 @@ namespace MediaRatingPlatform_Server
             using StreamReader stream = new StreamReader(context.Request.InputStream);
             string body = await stream.ReadToEndAsync();
             
-            await _mediaService.GetPersonalStatsAsync(userId);
-            WriteResponse(context.Response, "Read Personal Stats Successfull", "application/json");
+            PersonalStatsDTO personalStatsDTO = await _mediaService.GetPersonalStatsAsync(userId);
+            string json = JsonSerializer.Serialize(personalStatsDTO);
+            WriteResponse(context.Response, json, "application/json");
         }
 
         private async Task MediaStatsHandlerAsync(HttpListenerContext context)
@@ -425,21 +434,24 @@ namespace MediaRatingPlatform_Server
             string body = await stream.ReadToEndAsync();
             int mediaId = int.Parse(context.Request.QueryString.Get("mediaId"));
 
-            await _mediaService.GetMediaStatsAsync(mediaId);
-            WriteResponse(context.Response, "Read Media Stats Successfull", "application/json");
+            MediaStatsDTO mediaStatsDTO = await _mediaService.GetMediaStatsAsync(mediaId);
+            string json = JsonSerializer.Serialize(mediaStatsDTO);
+            WriteResponse(context.Response, json, "application/json");
         }
 
         private async Task RatingHistoryHandlerAsync(HttpListenerContext context)
         {
             int userId = await UserAuthorizationAsync(context);
-            await _mediaService.GetRatingHistoryAsync(userId);
-            WriteResponse(context.Response, "Read Rating History Successfull", "application/json");
+            List<MediaRatingEntity> ratings =  await _mediaService.GetRatingHistoryAsync(userId);
+            string json = JsonSerializer.Serialize(ratings);
+            WriteResponse(context.Response, json, "application/json");
         }
 
         private async Task LeaderboardHandlerAsync(HttpListenerContext context)
         {
-            await _mediaService.GetLeaderboardAsync();
-            WriteResponse(context.Response, "Read Leaderboard Successfull", "application/json");
+            List<LeaderboardDTO> leaderboardList = await _mediaService.GetLeaderboardAsync();
+            string json = JsonSerializer.Serialize(leaderboardList);
+            WriteResponse(context.Response, json, "application/json");
         }
 
       
@@ -469,8 +481,9 @@ namespace MediaRatingPlatform_Server
             string? sortBy = filter.Get("sort"); // kann title, release_year, star sein
             Console.WriteLine(genre);
 
-            await _mediaService.FilterMediaAsync(genre, type, releaseYear, ageRestriction, star, sortBy);
-            WriteResponse(context.Response, "Filter Media Successfull", "application/json");
+            List<MediaFilterDTO> mediaFilterDTO = await _mediaService.FilterMediaAsync(genre, type, releaseYear, ageRestriction, star, sortBy);
+            string json = JsonSerializer.Serialize(mediaFilterDTO);
+            WriteResponse(context.Response, json, "application/json");
 
         }
 
@@ -484,8 +497,9 @@ namespace MediaRatingPlatform_Server
             string? type = recommendations.Get("media_type");
             int? ageRestriction = int.TryParse(recommendations.Get("age_restriction"), out var age) ? age : null;
 
-            await _mediaService.GetRecommendationAsync(userId, genres, type, ageRestriction);
-            WriteResponse(context.Response, "Read Recommendations Successfull", "application/json");
+            MediaRecommendationDTO mediaRecommendationDTO = await _mediaService.GetRecommendationAsync(userId, genres, type, ageRestriction);
+            string json = JsonSerializer.Serialize(mediaRecommendationDTO);
+            WriteResponse(context.Response, json, "application/json");
         }
 
 

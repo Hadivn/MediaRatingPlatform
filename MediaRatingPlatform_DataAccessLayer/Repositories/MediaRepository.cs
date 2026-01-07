@@ -44,12 +44,13 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
         }
 
         // CRUD - Media read
-        public async Task ReadAllMediaAsync()
+        public async Task<List<MediaDTO>> ReadAllMediaAsync()
         {
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
             NpgsqlCommand cmd = new NpgsqlCommand("SELECT * FROM media", connection);
             using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+            List<MediaDTO> mediaList = new List<MediaDTO>();
             while (await reader.ReadAsync())
             {
                 Console.WriteLine($"Id: {reader["id"]}");
@@ -63,7 +64,19 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                 Console.WriteLine($"createdAt: {reader["created_at"]}");
                 Console.WriteLine($"userId: {reader["user_id"]}");
                 Console.WriteLine("----------------------------------------");
+
+                mediaList.Add(new MediaDTO
+                {
+                    title = reader["title"].ToString(),
+                    description = reader["description"].ToString(),
+                    mediaType = Enum.Parse<EMediaType>(reader["media_type"].ToString()),
+                    releaseYear = Convert.ToInt32(reader["release_year"]),
+                    ageRestriction = Convert.ToInt32(reader["age_restriction"]),
+                    genres = reader["genres"].ToString()
+                });
             }
+
+            return mediaList;
 
 
         }
@@ -81,7 +94,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             {
                 mediaDTO.title = reader["title"].ToString();
                 mediaDTO.description = reader["description"].ToString();
-                mediaDTO.mediaType = Enum.Parse<EMediaType>(reader["media_type"].ToString()!);
+                mediaDTO.mediaType = Enum.Parse<EMediaType>(reader["media_type"].ToString());
                 mediaDTO.releaseYear = Convert.ToInt32(reader["release_year"]);
                 mediaDTO.ageRestriction = Convert.ToInt32(reader["age_restriction"]);
                 mediaDTO.genres = reader["genres"].ToString();
@@ -198,31 +211,33 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task ReadAllMediaRatingsAsync()
+        public async Task<List<MediaAllRatingsDTO>> ReadAllMediaRatingsAsync()
         {
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
             NpgsqlCommand cmd;
-            cmd = new NpgsqlCommand("SELECT * FROM ratings", connection);
+            cmd = new NpgsqlCommand("SELECT r.star as star, r.comment as comment, r.is_confirmed as is_confirmed," +
+                " m.title as title FROM ratings r left join media m on r.media_id = m.id", connection);
             NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+            List<MediaAllRatingsDTO> mediaRatings = new List<MediaAllRatingsDTO>();
             while (await reader.ReadAsync())
             {
-                Console.WriteLine($"Id: {reader["id"]}");
-                Console.WriteLine($"Star: {reader["star"]}");
                 if (reader["is_confirmed"].Equals(true))
                 {
-                    Console.WriteLine($"IsConfirmed: {reader["is_confirmed"]}");
-                    Console.WriteLine($"Comment: {reader["comment"]}");
+                    
+                    mediaRatings.Add(new MediaAllRatingsDTO
+                    {
+                        star = (int)reader["star"],
+                        comment = reader["comment"].ToString(),
+                        isConfirmed = (bool)reader["is_confirmed"],
+                        title = reader["title"].ToString()
+
+                    });
+                    
                 }
-                else
-                {
-                    Console.WriteLine($"IsConfirmed : {reader["is_confirmed"]}");
-                }
-                Console.WriteLine($"CreatedAt: {reader["created_at"]}");
-                Console.WriteLine($"UserId: {reader["user_id"]}");
-                Console.WriteLine($"MediaId: {reader["media_id"]}");
-                Console.WriteLine("----------------------------------------");
             }
+
+            return mediaRatings;
 
 
         }
@@ -273,13 +288,21 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task DeleteRatingAsync(int ratingId)
+        public async Task<MediaDeleteDTO> DeleteRatingAsync(int ratingId)
         {
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
             var deleteCmd = new NpgsqlCommand("DELETE FROM ratings WHERE id = @id", connection);
             deleteCmd.Parameters.AddWithValue("id", ratingId);
             await deleteCmd.ExecuteNonQueryAsync();
+            MediaDeleteDTO mediaDeleteDTO = new MediaDeleteDTO
+            {
+                Id = ratingId,
+                DeletedAt = DateTime.UtcNow,
+                IsDeleted = true
+            };
+
+            return mediaDeleteDTO;
         }
 
 
@@ -299,21 +322,23 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 
         }
 
-        public async Task GetFavoritesAsync(int userId)
+        public async Task<MediaFavoriteEntity> GetFavoritesAsync(int userId)
         {
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
             var cmd = new NpgsqlCommand("SELECT * FROM favorites where user_id = @id", connection);
             cmd.Parameters.AddWithValue("id", userId);
             using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            await reader.ReadAsync();
+            
+            
+            MediaFavoriteEntity mediaFavoriteEntity = new MediaFavoriteEntity(mediaId: (int)reader["media_id"],
+                userId: (int)reader["user_id"])
             {
-                Console.WriteLine($"MediaId: {reader["media_id"]}");
-                Console.WriteLine($"UserId: {reader["user_id"]}");
-                Console.WriteLine($"CreatedAt: {reader["created_at"]}");
-                Console.WriteLine("----------------------------------------");
-            }
+                createdAt = (DateTime)reader["created_at"]
+            };
 
+            return mediaFavoriteEntity;
         }
 
         public async Task UnfavoriteMediaAsync(int mediaId, int userId)
@@ -329,7 +354,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 
         // -------------------------------- Personal statistics methods ----------------------------
 
-        public async Task GetPersonalStatsAsync(int id)
+        public async Task<PersonalStatsDTO> GetPersonalStatsAsync(int id)
         {
             Console.WriteLine("-------------------- personal statistics --------------------------");
             using var connection = new NpgsqlConnection(_connectionString);
@@ -356,9 +381,17 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             Console.WriteLine($"Star Average: {starAvg}");
             Console.WriteLine($"Favorite Media Genre: {favoriteMedia}");
 
+            PersonalStatsDTO personalStatsDTO = new PersonalStatsDTO
+            {
+                ratingCount = (int)ratingCount,
+                averageRating = starAvg,
+                favoriteGenre = favoriteMedia
+            }; 
+
+            return personalStatsDTO;
         }
 
-        public async Task GetMediaStatsAsync(int mediaId)
+        public async Task<MediaStatsDTO> GetMediaStatsAsync(int mediaId)
         {
             Console.WriteLine("-------------------- media statistics --------------------------");
             using var connection = new NpgsqlConnection(_connectionString);
@@ -374,10 +407,18 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             double starAvg = reader.IsDBNull(1) ? 0 : reader.GetDouble(1);
             Console.WriteLine($"Total Ratings: {ratingCount}");
             Console.WriteLine($"Star Average: {Math.Round(starAvg, 2)}");
+
+            MediaStatsDTO mediaStatsDTO = new MediaStatsDTO
+            {
+                totalRatings = (int)ratingCount,
+                averageRating = Math.Round(starAvg, 2)
+            };
+
+            return mediaStatsDTO;
         }
 
 
-        public async Task GetRatingHistoryAsync(int userId)
+        public async Task<List<MediaRatingEntity>> GetRatingHistoryAsync(int userId)
         {
             Console.WriteLine("-------------------- rating history --------------------------");
             using var connection = new NpgsqlConnection(_connectionString);
@@ -385,6 +426,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             NpgsqlCommand cmd = new NpgsqlCommand("SELECT * FROM ratings where user_id = @id", connection);
             cmd.Parameters.AddWithValue("id", userId);
             using var reader = await cmd.ExecuteReaderAsync();
+            List<MediaRatingEntity> ratings = new List<MediaRatingEntity>();
             while (await reader.ReadAsync())
             {
                 int id = reader.GetInt32(0);
@@ -410,10 +452,18 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                 Console.WriteLine($"UserId: {userIdRead}");
                 Console.WriteLine($"MediaId: {mediaId}");
                 Console.WriteLine("----------------------------------------");
+
+                ratings.Add(new MediaRatingEntity(star, comment, userId, mediaId, isConfirmed)
+                {
+                    id = id,
+                    createdAt = createdAt,
+                });
             }
+
+            return ratings;
         }
 
-        public async Task GetLeaderboardAsync()
+        public async Task<List<LeaderboardDTO>> GetLeaderboardAsync()
         {
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
@@ -422,13 +472,21 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                 "GROUP BY user_id order by count(id) DESC"
                 , connection);
             using var reader = await cmd.ExecuteReaderAsync();
+            List<LeaderboardDTO> leaderboardList = new List<LeaderboardDTO>();
             Console.WriteLine("-------------------- Leaderboard --------------------------");
             while (await reader.ReadAsync())
             {
                 int userId = reader.GetInt32(0);
                 long ratingCount = reader.GetInt64(1);
                 Console.WriteLine($"UserId: {userId} - Ratings given: {ratingCount}");
+                leaderboardList.Add(new LeaderboardDTO
+                {
+                    userId = userId,
+                    ratingCount = (int)ratingCount
+                });
             }
+
+            return leaderboardList;
         }
 
 
@@ -442,13 +500,14 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             for (int i = title.Length; i >= 3; i--)
             {
                 string subTitle = title.Substring(0, i);
-                NpgsqlCommand cmdTest = new NpgsqlCommand("SELECT title FROM media WHERE title ILIKE @title", connection);
+                using NpgsqlCommand cmdTest = new NpgsqlCommand("SELECT title FROM media WHERE title ILIKE @title", connection);
                 cmdTest.Parameters.AddWithValue("title", $"%{subTitle}%");
                 using NpgsqlDataReader readerTest = await cmdTest.ExecuteReaderAsync();
                 if (await readerTest.ReadAsync())
                 {
                     Console.WriteLine($"Found matching title: {readerTest["title"]}");
-                    return readerTest["title"].ToString();
+                    string foundTitle = readerTest["title"].ToString()!;
+                    return foundTitle;
                 }
 
 
@@ -458,7 +517,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             return "no title has been found!";
         }
 
-        public async Task FilterMediaAsync(string? genre, string? type, int? releaseYear, int? ageRestriction, int? star, string? sortBy)
+        public async Task<List<MediaFilterDTO>> FilterMediaAsync(string? genre, string? type, int? releaseYear, int? ageRestriction, int? star, string? sortBy)
         {
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
@@ -508,13 +567,14 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 
 
             if (filterConditions.Count == 0)
-                return; // nothing to update
+                throw new Exception("keine filter conditions"); 
             cmd.CommandText = $"Select m.id, m.title, m.media_type, m.genres, m.release_year, m.age_restriction, ROUND(AVG(r.star), 2) as avg, Count(r.id) as count from media m " +
                 "LEFT JOIN ratings r ON m.id = r.media_id " +
                 $"where {String.Join(" AND ", filterConditions)} " +
                 "GROUP BY m.id " +
                 $"{sortCondition}";
             using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+            List<MediaFilterDTO> filteredMedia = new List<MediaFilterDTO>();
             while (await reader.ReadAsync())
             {
                 Console.WriteLine("----------------------------------------");
@@ -527,11 +587,24 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
                 Console.WriteLine($"Average Star: {reader["avg"]}");
                 Console.WriteLine($"Total Ratings: {reader["count"]}");
                 Console.WriteLine("----------------------------------------");
+                filteredMedia.Add(new MediaFilterDTO
+                {
+                    id = (int)reader["id"],
+                    title = reader["title"].ToString(),
+                    mediaType = reader["media_type"].ToString(),
+                    genres = reader["genres"].ToString(),
+                    releaseYear = (int)reader["release_year"],
+                    ageRestriction = (int)reader["age_restriction"],
+                    averageStar = reader.IsDBNull(6) ? null : (decimal?)reader["avg"],
+                    totalRatings = reader.IsDBNull(7) ? null : (long?)reader["count"]
+                });
             }
+
+            return filteredMedia;
 
         }
 
-        public async Task GetRecommendationAsync(int userId, string? genres, string? type, int? ageRestriction)
+        public async Task<MediaRecommendationDTO> GetRecommendationAsync(int userId, string? genres, string? type, int? ageRestriction)
         {
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
@@ -556,7 +629,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             recommendationConditions.Add("m.user_id != @userId");
             cmd.Parameters.AddWithValue("userId", userId);
             if (recommendationConditions.Count == 0)
-                return;
+                throw new Exception("recommendation conditions sind 0");
 
             cmd.CommandText = $"Select m.id, m.title, m.media_type, m.genres, m.release_year, m.age_restriction," +
                 $" ROUND(AVG(r.star), 2) as avg from media m " +
@@ -568,18 +641,19 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
 
 
             using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                Console.WriteLine("------------ Recommendation --------------");
-                Console.WriteLine($"Id: {reader["id"]}");
-                Console.WriteLine($"Title: {reader["title"]}");
-                Console.WriteLine($"mediaType: {reader["media_type"]}");
-                Console.WriteLine($"genres: {reader["genres"]}");
-                Console.WriteLine($"releaseYear: {reader["release_year"]}");
-                Console.WriteLine($"ageRestriction: {reader["age_restriction"]}");
-                Console.WriteLine($"star: {reader["avg"]}");
-                Console.WriteLine("----------------------------------------");
-            }
+            MediaRecommendationDTO mediaRecommendationDTO = new MediaRecommendationDTO();
+            await reader.ReadAsync();
+            mediaRecommendationDTO.id = (int)reader["id"];
+            mediaRecommendationDTO.title = reader["title"].ToString()!;
+            mediaRecommendationDTO.mediaType = reader["media_type"].ToString()!;
+            mediaRecommendationDTO.genres = reader["genres"].ToString()!;
+            mediaRecommendationDTO.releaseYear = (int)reader["release_year"];
+            mediaRecommendationDTO.ageRestriction = (int)reader["age_restriction"];
+            mediaRecommendationDTO.star = reader.IsDBNull(6) ? null : (decimal?)reader["avg"];
+
+            return mediaRecommendationDTO;
+
+
 
         }
 

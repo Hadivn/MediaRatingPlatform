@@ -65,9 +65,9 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         }
 
         // CRUD - Media read
-        public async Task ReadAllMediaAsync()
+        public async Task<List<MediaDTO>> ReadAllMediaAsync()
         {
-            await _mediaRepository.ReadAllMediaAsync();
+           return await _mediaRepository.ReadAllMediaAsync();
         }
 
         public async Task<MediaDTO> ReadMediaByTitleAsync(string title)
@@ -178,9 +178,9 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 
         }
 
-        public async Task ReadAllMediaRatingsAsync()
+        public async Task<List<MediaAllRatingsDTO>> ReadAllMediaRatingsAsync()
         {
-            await _mediaRepository.ReadAllMediaRatingsAsync();
+           return await _mediaRepository.ReadAllMediaRatingsAsync();
         }
 
         public async Task UpdateMediaRatingAsync(MediaRatingUpdateDTO mediaRatingUpdateDTO, int ratingId, int userId)
@@ -244,20 +244,27 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 
         }
 
-        public async Task DeleteRatingAsync(int ratingId, int userId)
+        public async Task<MediaDeleteDTO> DeleteRatingAsync(int ratingId, int userId)
         {
 
             int createdByUserId = await _mediaRepository.GetUserIdByRatingId(ratingId);
             if (createdByUserId != userId)
             {
                 Console.WriteLine("Not allowed because of wrong userId\n----------------------------------");
-                return;
+                MediaDeleteDTO wrongDTO = new MediaDeleteDTO()
+                {
+                    Id = ratingId,
+                    DeletedAt = null,
+                    IsDeleted = false
+                };
+                return wrongDTO;
             }
 
             try
             {
-                await _mediaRepository.DeleteRatingAsync(ratingId);
+                MediaDeleteDTO mediaDeleteDTO = await _mediaRepository.DeleteRatingAsync(ratingId);
                 Console.WriteLine($"Deleting Rating {ratingId} successfull");
+                return mediaDeleteDTO;
             }
             catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "P0001")
             {
@@ -281,6 +288,8 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine("------------------------------------------------------------");
 
             }
+
+            return null;
         }
 
 
@@ -323,9 +332,9 @@ namespace MediaRatingPlatform_BusinessLogicLayer
             }
         }
 
-        public async Task GetFavoritesAsync(int userId)
+        public async Task<MediaFavoriteEntity> GetFavoritesAsync(int userId)
         {
-            await _mediaRepository.GetFavoritesAsync(userId);
+            return await _mediaRepository.GetFavoritesAsync(userId);
         }
 
         public async Task UnfavoriteMediaAsync(int mediaId, int userId)
@@ -350,25 +359,28 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 
         // --------------------------------- Statistics --------------------------------
 
-        public async Task GetPersonalStatsAsync(int userId)
+        public async Task<PersonalStatsDTO> GetPersonalStatsAsync(int userId)
         {
-            await _mediaRepository.GetPersonalStatsAsync(userId);
-
+            PersonalStatsDTO personalStatsDTO =  await _mediaRepository.GetPersonalStatsAsync(userId);
+            return personalStatsDTO;
         }
 
-        public async Task GetMediaStatsAsync(int mediaId)
+        public async Task<MediaStatsDTO> GetMediaStatsAsync(int mediaId)
         {
-            await _mediaRepository.GetMediaStatsAsync(mediaId);
+           MediaStatsDTO mediaStatsDTO = await _mediaRepository.GetMediaStatsAsync(mediaId);
+           return mediaStatsDTO;
         }
 
-        public async Task GetRatingHistoryAsync(int userId)
+        public async Task<List<MediaRatingEntity>> GetRatingHistoryAsync(int userId)
         {
-            await _mediaRepository.GetRatingHistoryAsync(userId);
+           List<MediaRatingEntity> ratings = await _mediaRepository.GetRatingHistoryAsync(userId);
+           return ratings;
         }
 
-        public async Task GetLeaderboardAsync()
+        public async Task<List<LeaderboardDTO>> GetLeaderboardAsync()
         {
-            await _mediaRepository.GetLeaderboardAsync();
+           List<LeaderboardDTO> leaderboardList = await _mediaRepository.GetLeaderboardAsync();
+           return leaderboardList;
         }
 
 
@@ -376,28 +388,29 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 
         public async Task<string> SearchMediaAsync(string title)
         {
-            if (await _mediaRepository.GetMediaIdByTitle(title) == null) { 
+          
+            string foundTitle = await _mediaRepository.SearchMediaAsync(title);
+            if (await _mediaRepository.GetMediaIdByTitle(foundTitle) == null)
+            {
                 throw new Exception("Media does not exist.");
             }
-            return await _mediaRepository.SearchMediaAsync(title);
+            return foundTitle;
 
         }
 
-        public async Task FilterMediaAsync(string? genre, string? type, int? releaseYear, int? ageRestriction, int? star, string? sortBy)
+        public async Task<List<MediaFilterDTO>> FilterMediaAsync(string? genre, string? type, int? releaseYear, int? ageRestriction, int? star, string? sortBy)
         {
             if(sortBy is null)
             {
                 sortBy = "title";
             }
 
-            await _mediaRepository.FilterMediaAsync(genre, type, releaseYear, ageRestriction, star, sortBy);
+            return await _mediaRepository.FilterMediaAsync(genre, type, releaseYear, ageRestriction, star, sortBy);
         }
 
-        public async Task GetRecommendationAsync(int userId, string? genres, string? type, int? ageRestriction)
+        public async Task<MediaRecommendationDTO> GetRecommendationAsync(int userId, string? genres, string? type, int? ageRestriction)
         {
-
-            await _mediaRepository.GetRecommendationAsync(userId, genres, type, ageRestriction);
-
+            return await _mediaRepository.GetRecommendationAsync(userId, genres, type, ageRestriction);
         }
     }
 }

@@ -11,25 +11,25 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories.Interface
     public interface IMediaRepository
     {
         Task CreateMediaAsync(MediaEntity mediaEntity);
-        Task ReadAllMediaAsync();
+        Task<List<MediaDTO>> ReadAllMediaAsync();
         Task UpdateMediaAsync(MediaUpdateDTO mediaUpdateDTO, string title);
         Task DeleteMediaByTitle(string title);
         Task RateMediaAsync(MediaRatingEntity mediaRatingEntity);
-        Task ReadAllMediaRatingsAsync();
+        Task<List<MediaAllRatingsDTO>> ReadAllMediaRatingsAsync();
         Task UpdateMediaRatingAsync(MediaRatingUpdateDTO mediaRatingUpdateDTO, int ratingId);
         Task LikeRatingAsync(LikeRatingEntity likeRatingEntity);
-        Task DeleteRatingAsync(int ratingId);
+        Task<MediaDeleteDTO> DeleteRatingAsync(int ratingId);
         Task FavoriteMediaAsync(MediaFavoriteEntity mediaFavoriteEntity);
-        Task GetFavoritesAsync(int userId);
+        Task<MediaFavoriteEntity> GetFavoritesAsync(int userId);
         Task UnfavoriteMediaAsync(int mediaId, int userId);
-        Task GetPersonalStatsAsync(int id);
+        Task<PersonalStatsDTO> GetPersonalStatsAsync(int id);
 
-        Task GetMediaStatsAsync(int mediaId);
-        Task GetRatingHistoryAsync(int userId);
-        Task GetLeaderboardAsync();
+        Task<MediaStatsDTO> GetMediaStatsAsync(int mediaId);
+        Task<List<MediaRatingEntity>> GetRatingHistoryAsync(int userId);
+        Task<List<LeaderboardDTO>> GetLeaderboardAsync();
         Task<string> SearchMediaAsync(string title);
-        Task FilterMediaAsync(string? genre, string? type, int? releaseYear, int? ageRestriction, int? star, string? sortBy);
-        Task GetRecommendationAsync(int userId, string? genres, string? type, int? ageRestriction);
+        Task<List<MediaFilterDTO>> FilterMediaAsync(string? genre, string? type, int? releaseYear, int? ageRestriction, int? star, string? sortBy);
+        Task<MediaRecommendationDTO> GetRecommendationAsync(int userId, string? genres, string? type, int? ageRestriction);
         Task<bool> MediaExists(string title);
         Task<int> GetCreatedByUserId(string title);
         Task<int?> GetMediaIdByTitle(string title);
