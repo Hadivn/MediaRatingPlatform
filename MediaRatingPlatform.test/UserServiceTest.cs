@@ -99,7 +99,32 @@ namespace MediaRatingPlatform.test
             });
         }
 
-       
+        [Fact]
+        public async Task LoginUser_WrongPassword_ThrowException()
+        {
+            string username = "Test1";
+            string correctPassword = "right Password";
+            string wrongPassword = "wrong Password";
+            var userEntity = new UserEntity(username, correctPassword);
+         
+            _userRepositoryMock
+                .Setup(repo => repo.GetByUsernameAsync(username))
+                .ReturnsAsync(true);
+
+            _userRepositoryMock
+                .Setup(repo => repo.GetFullUserByUsername(username))
+                .ReturnsAsync(new UserEntity(username, correctPassword));
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+            {
+                await _userService.LoginUserAsync(username, wrongPassword);
+            });
+        }
+
+
+        
+
+
 
 
 

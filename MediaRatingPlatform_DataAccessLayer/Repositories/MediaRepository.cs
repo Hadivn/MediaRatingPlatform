@@ -585,13 +585,13 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             return createdByUserId;
         }
 
-        public async Task<int> GetMediaIdByTitle(string title)
+        public async Task<int?> GetMediaIdByTitle(string title)
         {
             using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
             var mediaIdCmd = new NpgsqlCommand("SELECT id FROM media WHERE title = @t", connection);
             mediaIdCmd.Parameters.AddWithValue("t", title);
-            int mediaId = (int)await mediaIdCmd.ExecuteScalarAsync();
+            int? mediaId = (int)await mediaIdCmd.ExecuteScalarAsync();
             return mediaId;
         }
 
@@ -617,6 +617,24 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
             return userId;
         }
 
+        public async Task<bool> DoesMediaExistById(int mediaId)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var mediaExistsCmd = new NpgsqlCommand("SELECT COUNT(*) FROM media WHERE id = @id", connection);
+            mediaExistsCmd.Parameters.AddWithValue("id", mediaId);
+            var count = (long)await mediaExistsCmd.ExecuteScalarAsync();
+            return count > 0;
+        }
+
+        public async Task<int> GetMediaId(string title)
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            var getMediaCmd = new NpgsqlCommand("SELECT id FROM media WHERE title = @t", connection);
+            getMediaCmd.Parameters.AddWithValue("t", title);
+            return (int)await getMediaCmd.ExecuteScalarAsync();
+        }
 
 
 

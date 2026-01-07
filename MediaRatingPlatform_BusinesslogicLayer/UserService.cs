@@ -67,7 +67,7 @@
                     }
                     else
                     {
-                        throw new Exception($"Tried to loginIn but the password for {username} was wrong");
+                        throw new UnauthorizedAccessException($"Tried to loginIn but the password for {username} was wrong");
                     }
                 }
                 else

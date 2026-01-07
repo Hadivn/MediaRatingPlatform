@@ -129,11 +129,19 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         public async Task RateMediaAsync(MediaRatingDTO mediaRatingDTO, string title, int userId)
         {
 
-            int mediaId = await _mediaRepository.GetMediaIdByTitle(title);
+            int mediaId = await _mediaRepository.GetMediaId(title);
             MediaRatingEntity mediaRatingEntity = new MediaRatingEntity(mediaRatingDTO.star, mediaRatingDTO.comment, userId, mediaId, mediaRatingDTO.isConfirmed);
 
             try
             {
+                if(mediaRatingEntity.star < 1)
+                {
+                    throw new Exception("Star rating must be 1 or higher");
+                }
+                if(mediaRatingEntity.star > 5)
+                {
+                    throw new Exception("Star rating must be 5 or lower");
+                }
                 await _mediaRepository.RateMediaAsync(mediaRatingEntity);
                 Console.WriteLine($"rating Media {title} successfull");
             }
@@ -274,6 +282,10 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 
         public async Task FavoriteMediaAsync(int mediaId, int userId)
         {
+            if (!await _mediaRepository.DoesMediaExistById(mediaId))
+            {
+                throw new Exception("Media does not exist.");
+            }
             MediaFavoriteEntity mediaFavoriteEntity = new MediaFavoriteEntity(mediaId, userId);
             try
             {
@@ -286,6 +298,14 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine($"Favoriting Media {mediaId} failed: *Media already favorited by this user.*");
                 Console.WriteLine("Exception in BusinessLogic-Layer");
                 Console.WriteLine("------------------------------------------------------------");
+                throw;
+            } catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "23503")
+            {
+                Console.WriteLine("------------------ FAVORITING MEDIA FAILED ------------------");
+                Console.WriteLine($"Favoriting Media {mediaId} failed: *Media does not exist.*");
+                Console.WriteLine("Exception in BusinessLogic-Layer");
+                Console.WriteLine("------------------------------------------------------------");
+                throw;
             }
             catch (Exception ex)
             {
@@ -293,6 +313,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine($"Favoriting Media {mediaId} failed: *{ex.Message}*");
                 Console.WriteLine("Exception in BusinessLogic-Layer");
                 Console.WriteLine("------------------------------------------------------------");
+                throw;
             }
         }
 
@@ -303,17 +324,14 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 
         public async Task UnfavoriteMediaAsync(int mediaId, int userId)
         {
+            if (!await _mediaRepository.DoesMediaExistById(mediaId))
+            {
+                throw new Exception("Media does not exist.");
+            }
             try
             {
                 await _mediaRepository.UnfavoriteMediaAsync(mediaId, userId);
                 Console.WriteLine($"Deleting Favorite Media {mediaId} successfull");
-            }
-            catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "P0001")
-            {
-                Console.WriteLine("------------------ DELETING FAVORITE MEDIA FAILED ------------------");
-                Console.WriteLine($"Deleting Favorite Media {mediaId} failed: *Favorite does not exist.*");
-                Console.WriteLine("Exception in BusinessLogic-Layer");
-                Console.WriteLine("------------------------------------------------------------");
             }
             catch (Exception ex)
             {
@@ -352,6 +370,9 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 
         public async Task<string> SearchMediaAsync(string title)
         {
+            if (await _mediaRepository.GetMediaIdByTitle(title) == null) { 
+                throw new Exception("Media does not exist.");
+            }
             return await _mediaRepository.SearchMediaAsync(title);
 
         }

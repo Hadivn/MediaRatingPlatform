@@ -32,9 +32,11 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories.Interface
         Task GetRecommendationAsync(int userId, string? genres, string? type, int? ageRestriction);
         Task<bool> MediaExists(string title);
         Task<int> GetCreatedByUserId(string title);
-        Task<int> GetMediaIdByTitle(string title);
+        Task<int?> GetMediaIdByTitle(string title);
+        Task<bool> DoesMediaExistById(int mediaId);
         Task<bool> IsRatingPublic(int ratingId);
         Task<int> GetUserIdByRatingId(int ratingId);
+        Task<int> GetMediaId(string title);
 
     }
 }
