@@ -1,11 +1,12 @@
-﻿using MediaRatingPlatform_Domain.DTO;
+﻿using MediaRatingPlatform_DataAccessLayer.Repositories.Interface;
+using MediaRatingPlatform_Domain.DTO;
 using MediaRatingPlatform_Domain.Entities;
 using Npgsql;
 using NpgsqlTypes;
 
 namespace MediaRatingPlatform_DataAccessLayer.Repositories
 {
-    public class MediaRepository
+    public class MediaRepository : IMediaRepository
     {
         // ExecuteNonQueryAsync für Insert, Update, Delete
         // ExecuteReaderAsync für Select

@@ -1,5 +1,6 @@
 ﻿using MediaRatingPlatform_BusinessLogicLayer.Repositories;
 using MediaRatingPlatform_DataAccessLayer.Repositories;
+using MediaRatingPlatform_DataAccessLayer.Repositories.Interface;
 using MediaRatingPlatform_Domain.DTO;
 using MediaRatingPlatform_Domain.Entities;
 using MediaRatingPlatform_Domain.ENUM;
@@ -16,7 +17,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
     {
         private MediaRepository _mediaRepository;
 
-        public MediaService()
+        public MediaService(IMediaRepository mediaRepository, IUserRepository userRepository)
         {
             _mediaRepository = new MediaRepository();
         }
@@ -25,6 +26,10 @@ namespace MediaRatingPlatform_BusinessLogicLayer
         public async Task CreateMediaAsync(MediaDTO mediaDTO, int userId)
         {
 
+            if(mediaDTO.mediaType is null)
+            {
+                throw new Exception("Media type cannot be null");
+            }
             // ENUM, from int to MediaType
             EMediaType eMediaType = (EMediaType)mediaDTO.mediaType;
             MediaEntity mediaEntity = new MediaEntity(mediaDTO.title, mediaDTO.description, eMediaType,

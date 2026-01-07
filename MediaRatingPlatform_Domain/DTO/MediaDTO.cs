@@ -17,7 +17,7 @@ namespace MediaRatingPlatform_Domain.DTO
         public string description { get; set; }
 
         [JsonPropertyName("media_type")]
-        public EMediaType mediaType { get; set; }
+        public EMediaType? mediaType { get; set; }
 
         [JsonPropertyName("release_year")]
         public int releaseYear { get; set; }

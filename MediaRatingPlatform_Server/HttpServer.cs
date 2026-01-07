@@ -1,4 +1,7 @@
 ﻿using MediaRatingPlatform_BusinessLogicLayer;
+using MediaRatingPlatform_BusinessLogicLayer.Repositories;
+using MediaRatingPlatform_DataAccessLayer.Repositories;
+using MediaRatingPlatform_DataAccessLayer.Repositories.Interface;
 using MediaRatingPlatform_Domain.DTO;
 using MediaRatingPlatform_Domain.Entities;
 using Npgsql;
@@ -18,6 +21,8 @@ namespace MediaRatingPlatform_Server
         private MediaService _mediaService;
         private TokenService _tokenService = new TokenService();
         private HttpListener _listener;
+        private IMediaRepository _mediaRepository = new MediaRepository();
+        private IUserRepository _userRepository = new UserRepository();
         // method depending on endpoint.
         private Dictionary<(string path, string method), Func<HttpListenerContext, Task>> _routes;
         public HttpServer(string prefix)
@@ -26,9 +31,9 @@ namespace MediaRatingPlatform_Server
             {
                 throw new ArgumentNullException("prefix");
             }
-
-            _userService = new UserService(_tokenService);
-            _mediaService = new MediaService();
+            
+            _userService = new UserService(_userRepository, _tokenService);
+            _mediaService = new MediaService(_mediaRepository, _userRepository);
 
             _listener = new HttpListener();
             _listener.Prefixes.Add(prefix);
