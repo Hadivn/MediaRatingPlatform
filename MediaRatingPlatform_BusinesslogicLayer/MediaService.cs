@@ -15,11 +15,13 @@ namespace MediaRatingPlatform_BusinessLogicLayer
 {
     public class MediaService
     {
-        private MediaRepository _mediaRepository;
+        private IMediaRepository _mediaRepository;
+        private IUserRepository _userRepository;
 
         public MediaService(IMediaRepository mediaRepository, IUserRepository userRepository)
         {
-            _mediaRepository = new MediaRepository();
+            _mediaRepository = mediaRepository;
+            _userRepository = userRepository;
         }
 
         // CRUD - Media create
@@ -111,6 +113,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine($"Deleting Media {title} failed: *Media does not exist.*");
                 Console.WriteLine("Exception in BusinessLogic-Layer");
                 Console.WriteLine("------------------------------------------------------------");
+                throw;
             }
             catch (Exception ex)
             {
@@ -118,6 +121,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine($"Deleting Media {title} failed: *{ex.Message}*");
                 Console.WriteLine("Exception in BusinessLogic-Layer");
                 Console.WriteLine("------------------------------------------------------------");
+                throw;
             }
         }
 
@@ -139,6 +143,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine($"rating Media {title} failed: *Media does not exist.*");
                 Console.WriteLine("Exception in BusinessLogic-Layer");
                 Console.WriteLine("------------------------------------------------------------");
+                throw;
             }
             catch (NpgsqlException npgsqlEx) when (npgsqlEx.SqlState == "23505")
             {
@@ -146,6 +151,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine($"rating Media {title} failed: *User has already rated this media.*");
                 Console.WriteLine("Exception in BusinessLogic-Layer");
                 Console.WriteLine("------------------------------------------------------------");
+                throw;
             }
             catch (Exception ex)
             {
@@ -153,6 +159,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer
                 Console.WriteLine($"rating Media {title} failed: *{ex.Message}*");
                 Console.WriteLine("Exception in BusinessLogic-Layer");
                 Console.WriteLine("------------------------------------------------------------");
+                throw;
             }
 
         }
