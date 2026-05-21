@@ -7,8 +7,7 @@ namespace MediaRatingPlatform_BusinessLogicLayer.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        private string _connectionString = "Host=192.168.0.53;Port=5432;Username=mrpdatabase;Password=user;Database=mrpdatabase";
-        
+        private string _connectionString = Environment.GetEnvironmentVariable("DbConnectionString");
 
         // CRUD - User create
         public async Task CreateUser(UserEntity userEntity)

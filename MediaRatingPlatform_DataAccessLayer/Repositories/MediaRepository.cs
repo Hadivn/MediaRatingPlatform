@@ -11,7 +11,7 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
     {
         // ExecuteNonQueryAsync für Insert, Update, Delete
         // ExecuteReaderAsync für Select
-        private string _connectionString = "Host=192.168.0.53;Port=5432;Username=mrpdatabase;Password=user;Database=mrpdatabase";
+        private string _connectionString = Environment.GetEnvironmentVariable("DbConnectionString");
 
         // CRUD - Media create
         public async Task CreateMediaAsync(MediaEntity mediaEntity)
