@@ -13,6 +13,8 @@ namespace MediaRatingPlatform_DataAccessLayer.Repositories
         // ExecuteReaderAsync für Select
         private string _connectionString = Environment.GetEnvironmentVariable("DbConnectionString");
 
+        //
+        string devops = "devops pipeline test";
         // CRUD - Media create
         public async Task CreateMediaAsync(MediaEntity mediaEntity)
         {
