@@ -14,9 +14,4 @@ await dbConnection.InitializeDatabase();
 HttpServer httpServer = new HttpServer("http://localhost:8080/");
 await httpServer.Start();
 
-
-// devops test 1
-// devops test 2
-// devops test 3
-// dev test
-// dev test 2
+// DevOps test 1
