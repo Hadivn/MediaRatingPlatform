@@ -1,163 +1,81 @@
-# ============================================================
-# MediaRatingPlatform – Build Pipeline (CI)
-# Triggers on every push to master and pull requests.
-# Secrets are read from Azure Key Vault via a Variable Group –
-# NO passwords or connection strings are stored in this file.
-# ============================================================
-
 trigger:
-  branches:
-    include:
-      - master
-      - feature/*
+- pc_branch
 
-pr:
-  branches:
-    include:
-      - master
 
-# --------------- Agent Pool ---------------
-pool:
-  vmImage: 'ubuntu-latest'
-
-# --------------- Variable Group (links to Key Vault) ---------------
-# In Azure DevOps: Pipelines → Library → Variable Groups
-# The group "mrp-keyvault-vg" is linked to the Azure Key Vault
-# "mrp-keyvault" via the Service Connection "mrp-azure-sc".
-# The Key Vault stores:
-#   - DB-HOST, DB-PORT, DB-USERNAME, DB-PASSWORD, DB-NAME
-#   - JWT-SECRET-KEY
 variables:
-  - group: mrp-keyvault-vg          # all secrets injected as env vars
-  - name: buildConfiguration
-    value: 'Release'
-  - name: dotnetVersion
-    value: '9.x'
-  - name: solutionPath
-    value: 'MediaRatingPlatform/MediaRatingPlatform.sln'
-  - name: testProject1
-    value: 'MediaRatingPlatform/MediaRatingPlatfrom.Test/MediaRatingPlatfrom.Test.csproj'
-  - name: testProject2
-    value: 'MediaRatingPlatform/MediaRatingPlatform.test/MediaRatingPlatform.Test.csproj'
-  - name: publishProject
-    value: 'MediaRatingPlatform/MediaRatingPlatform_Server/MediaRatingPlatform_Server.csproj'
+- name: solution
+  value: '**/*.sln'
+- name: buildPlatform
+  value: 'Any CPU'
+- name: buildConfiguration
+  value: 'Release'
+- group: keyvault-secrets
 
-# ============================================================
-# STAGES
-# ============================================================
 stages:
-
-# ----------------------------------------------------------
-# Stage 1: Build
-# ----------------------------------------------------------
 - stage: Build
-  displayName: 'Build'
+  displayName: 'Build und Test'
   jobs:
   - job: BuildJob
-    displayName: 'Restore, Build & Publish Artifact'
+    pool:
+      vmImage: 'windows-latest'
     steps:
+    - task: NuGetToolInstaller@1
+      displayName: 'NuGet installieren'
 
-    # 1. Use the correct .NET SDK
-    - task: UseDotNet@2
-      displayName: 'Install .NET $(dotnetVersion)'
+    - task: NuGetCommand@2
+      displayName: 'NuGet Pakete wiederherstellen'
       inputs:
-        packageType: 'sdk'
-        version: '$(dotnetVersion)'
+        restoreSolution: '$(solution)'
 
-    # 2. Restore NuGet packages
-    - task: DotNetCoreCLI@2
-      displayName: 'NuGet Restore'
+    - task: VSBuild@1
+      displayName: 'Projekt kompilieren'
       inputs:
-        command: 'restore'
-        projects: '$(solutionPath)'
+        solution: '$(solution)'
+        msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(Build.ArtifactStagingDirectory)"'
+        platform: '$(buildPlatform)'
+        configuration: '$(buildConfiguration)'
 
-    # 3. Build solution
-    - task: DotNetCoreCLI@2
-      displayName: 'Build Solution'
+    - task: VSTest@2
+      displayName: 'Tests ausfuehren'
       inputs:
-        command: 'build'
-        projects: '$(solutionPath)'
-        arguments: '--configuration $(buildConfiguration) --no-restore'
-
-    # 4. Publish the server project
-    - task: DotNetCoreCLI@2
-      displayName: 'Publish Server'
+        platform: '$(buildPlatform)'
+        configuration: '$(buildConfiguration)'
+    - task: CopyFiles@2
+      displayName: 'Kopiere Build-Dateien in den Staging-Ordner'
       inputs:
-        command: 'publish'
-        publishWebProjects: false
-        projects: '$(publishProject)'
-        arguments: '--configuration $(buildConfiguration) --no-build --output $(Build.ArtifactStagingDirectory)/drop'
-        zipAfterPublish: true
-
-    # 5. Upload drop as pipeline artifact
+        SourceFolder: '$(Build.SourcesDirectory)'
+        Contents: '**/MediaRatingPlatform_Server/bin/Release/**'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+        cleanTargetFolder: true
     - task: PublishBuildArtifacts@1
-      displayName: 'Upload Artifact: drop'
+      displayName: 'Veroeffentliche Artefakt drop'
       inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)/drop'
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'drop'
         publishLocation: 'Container'
 
-# ----------------------------------------------------------
-# Stage 2: Test
-# ----------------------------------------------------------
-- stage: Test
-  displayName: 'Test'
+- stage: Deploy
+  displayName: 'Echtes Release und Deployment'
   dependsOn: Build
+  condition: succeeded()
   jobs:
-  - job: TestJob
-    displayName: 'Run Unit Tests'
-    # Secrets are injected as environment variables so tests
-    # can construct the DB connection string without storing
-    # credentials in code or config files.
-    variables:
-      MRP_DB_HOST:     $(DB-HOST)
-      MRP_DB_PORT:     $(DB-PORT)
-      MRP_DB_USERNAME: $(DB-USERNAME)
-      MRP_DB_PASSWORD: $(DB-PASSWORD)
-      MRP_DB_NAME:     $(DB-NAME)
-      MRP_JWT_SECRET:  $(JWT-SECRET-KEY)
-    steps:
+  - deployment: DeployJob
+    pool:
+      vmImage: 'windows-latest'
+    environment: 'Production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+            displayName: 'Lade Build-Artefakte herunter'
 
-    - task: UseDotNet@2
-      displayName: 'Install .NET $(dotnetVersion)'
-      inputs:
-        packageType: 'sdk'
-        version: '$(dotnetVersion)'
-
-    - task: DotNetCoreCLI@2
-      displayName: 'NuGet Restore'
-      inputs:
-        command: 'restore'
-        projects: '$(solutionPath)'
-
-    # Run NUnit test project
-    - task: DotNetCoreCLI@2
-      displayName: 'Run NUnit Tests'
-      inputs:
-        command: 'test'
-        projects: '$(testProject1)'
-        arguments: >
-          --configuration $(buildConfiguration)
-          --no-restore
-          --collect:"XPlat Code Coverage"
-          --results-directory $(Agent.TempDirectory)/TestResults
-        publishTestResults: true
-
-    # Run xUnit test project
-    - task: DotNetCoreCLI@2
-      displayName: 'Run xUnit Tests'
-      inputs:
-        command: 'test'
-        projects: '$(testProject2)'
-        arguments: >
-          --configuration $(buildConfiguration)
-          --no-restore
-          --collect:"XPlat Code Coverage"
-          --results-directory $(Agent.TempDirectory)/TestResults
-        publishTestResults: true
-
-    # Publish combined code coverage
-    - task: PublishCodeCoverageResults@2
-      displayName: 'Publish Code Coverage'
-      inputs:
-        summaryFileLocation: '$(Agent.TempDirectory)/TestResults/**/coverage.cobertura.xml'
+          - task: AzureWebApp@1
+            displayName: 'Echtes Cloud-Deployment in Azure App Service'
+            inputs:
+              azureSubscription: 'devops-rm'
+              appType: 'webApp'
+              appName: 'mrp-devops-webapp'
+              package: '$(Pipeline.Workspace)/drop/**/MediaRatingPlatform_Server/bin/Release'
+              appSettings: '-DB_CONNECTION_STRING_LONG "$(DbConnectionStringLong)" -DB_CONNECTION_STRING_SHORT "$(DbConnectionStringShort)"'
