@@ -78,4 +78,4 @@ stages:
               appType: 'webApp'
               appName: 'mrp-devops-webapp'
               package: '$(Pipeline.Workspace)/drop/**/MediaRatingPlatform_Server/bin/Release'
-              appSettings: '-DB_CONNECTION_STRING_LONG "$(DbConnectionStringLong)" -DB_CONNECTION_STRING_SHORT "$(DbConnectionStringShort)"'
+              appSettings: '-DB_CONNECTION_STRING_LONG "$(NewDbConnectString)" -DB_CONNECTION_STRING_SHORT "$(NewDbConnectionHost)"'
